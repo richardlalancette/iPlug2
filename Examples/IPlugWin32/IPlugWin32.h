@@ -2,6 +2,7 @@
 
 #include "IPlug_include_in_plug_hdr.h"
 #include "resource.h"
+#include "swell.h"
 
 const int kNumPrograms = 1;
 

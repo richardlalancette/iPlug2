@@ -1,6 +1,6 @@
 #include "IPlugWin32.h"
 #include "IPlug_include_in_plug_src.h"
-#include "CommCtrl.h"
+#include "commctrl.h"
 #include "wdlutf8.h"
 
 IPlugWin32::IPlugWin32(const InstanceInfo& info)
@@ -42,22 +42,24 @@ BOOL IPlugWin32::Callback(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPar
     return TRUE;
   case WM_HSCROLL:
   {
-    if (LOWORD(wParam) == TB_THUMBTRACK)
+#ifdef OS_MAC
+    int sliderID = GetWindowLong((HWND)lParam, GWL_ID);
+    float normalisedValue = SWELL_TB_GetPos(hwndDlg, sliderID) / 100.f;
+#else
+    float normalisedValue = HIWORD(wParam) / 100.f;
+    int sliderID = GetDlgCtrlID((HWND)lParam);
+#endif
+    
+    switch (sliderID)
     {
-      float normalisedValue = HIWORD(wParam) / 100.f;
-      int sliderID = GetDlgCtrlID((HWND)lParam);
-
-      switch (sliderID)
-      {
-      case IDC_GAIN_SLIDER:
-      {
-        SetParameterValue(kGain, normalisedValue);
-        SetStaticText(IDC_GAIN_TEXT, kGain);
-        return TRUE;
-      }
-      default:
-        break;
-      }
+    case IDC_GAIN_SLIDER:
+    {
+      SetParameterValue(kGain, normalisedValue);
+      SetStaticText(IDC_GAIN_TEXT, kGain);
+      return TRUE;
+    }
+    default:
+      break;
     }
   }
   default:
@@ -93,7 +95,7 @@ void IPlugWin32::SetStaticText(int id, int paramIdx)
   GetParam(paramIdx)->GetDisplayForHostWithLabel(str, true);
   WDL_WCHAR itemText[32];
   WDL_MBtoWideStr(itemText, str.Get(), 32/*check?*/);
-  SetDlgItemText(mControlHWND, id, (LPCWSTR) itemText);
+//  SetDlgItemText(mControlHWND, id, (LPCWSTR) itemText);
 }
 
 void IPlugWin32::ProcessBlock(sample** inputs, sample** outputs, int nFrames)
