@@ -9,16 +9,6 @@ IPlugWin32::IPlugWin32(const InstanceInfo& info)
   GetParam(kGain)->InitDouble("Gain", 0., 0., 100.0, 0.01, "%");
 }
 
-BOOL CALLBACK Proc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-  IPlugWin32* _this = reinterpret_cast<IPlugWin32*>(GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
-
-  if(_this)
-    return _this->Callback(hwndDlg, message, wParam, lParam);
-
-  return FALSE;
-}
-
 void* IPlugWin32::OpenWindow(void* pParent)
 {
   HWND parentHWND = reinterpret_cast<HWND>(pParent);
@@ -34,36 +24,41 @@ void IPlugWin32::CloseWindow()
   DestroyWindow(mControlHWND);
 }
 
-BOOL IPlugWin32::Callback(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
+BOOL CALLBACK IPlugWin32::Proc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+  IPlugWin32* _this = reinterpret_cast<IPlugWin32*>(GetWindowLongPtr(hDlg, GWLP_USERDATA));
+
   switch (message)
   {
-  case WM_INITDIALOG:
-    return TRUE;
-  case WM_HSCROLL:
-  {
-#ifdef OS_MAC
-    int sliderID = GetWindowLong((HWND)lParam, GWL_ID);
-    float normalisedValue = SWELL_TB_GetPos(hwndDlg, sliderID) / 100.f;
-#else
-    float normalisedValue = HIWORD(wParam) / 100.f;
-    int sliderID = GetDlgCtrlID((HWND)lParam);
-#endif
-    
-    switch (sliderID)
+    case WM_INITDIALOG:
     {
-    case IDC_GAIN_SLIDER:
-    {
-      SetParameterValue(kGain, normalisedValue);
-      SetStaticText(IDC_GAIN_TEXT, kGain);
+      SendMessage(GetDlgItem(hDlg, IDC_GAIN_SLIDER), TBM_SETRANGE, 0, MAKELONG(0, 1024));
       return TRUE;
+    }
+    case WM_HSCROLL:
+    {
+  #ifndef OS_WIN
+      int sliderID = GetWindowLong((HWND)lParam, GWL_ID);
+      float normalisedValue = SWELL_TB_GetPos(hDlg, sliderID) / 1024.f;
+  #else
+      float normalisedValue = static_cast<float>(HIWORD(wParam))/ 1024.f;
+      int sliderID = GetDlgCtrlID((HWND)lParam);
+  #endif
+    
+      switch (sliderID)
+      {
+        case IDC_GAIN_SLIDER:
+        {
+          _this->SetParameterValue(kGain, normalisedValue);
+          _this->SetStaticText(IDC_GAIN_TEXT, kGain);
+          return TRUE;
+        }
+        default:
+          break;
+      }
     }
     default:
       break;
-    }
-  }
-  default:
-    break;
   }
   return FALSE;
 }
@@ -74,11 +69,11 @@ void IPlugWin32::OnParamChangeUI(int paramIdx, EParamSource source)
   {
     switch (paramIdx)
     {
-    case kGain:
-    {
-      SendDlgItemMessage(mControlHWND, IDC_GAIN_SLIDER, TBM_SETPOS, (WPARAM)TRUE, (LPARAM)GetParam(kGain)->Int());
-      SetStaticText(IDC_GAIN_TEXT, kGain);
-    }
+      case kGain:
+      {
+        SendDlgItemMessage(mControlHWND, IDC_GAIN_SLIDER, TBM_SETPOS, (WPARAM)TRUE, (LPARAM)GetParam(kGain)->Int());
+        SetStaticText(IDC_GAIN_TEXT, kGain);
+      }
     default:
       break;
     }
@@ -93,9 +88,14 @@ void IPlugWin32::SetStaticText(int id, int paramIdx)
 {
   WDL_String str;
   GetParam(paramIdx)->GetDisplayForHostWithLabel(str, true);
+
+#if UNICODE
   WDL_WCHAR itemText[32];
   WDL_MBtoWideStr(itemText, str.Get(), 32/*check?*/);
-//  SetDlgItemText(mControlHWND, id, (LPCWSTR) itemText);
+  SetDlgItemText(mControlHWND, id, (LPCWSTR) itemText);
+#else
+  SetDlgItemText(mControlHWND, id, (LPCSTR) str.Get());
+#endif
 }
 
 void IPlugWin32::ProcessBlock(sample** inputs, sample** outputs, int nFrames)
