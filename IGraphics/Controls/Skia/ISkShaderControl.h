@@ -32,11 +32,27 @@ public:
   : IControl(bounds)
   {
     fSkSL =
-        "uniform half4 gColor;\n"
+        "uniform float time;\n"
         "void main(float x, float y, inout half4 color) {\n"
-          "color = half4(1,0,0,1);"
+          "half timeh = half(time);\n"
+          "color = half4(timeh, half(y)/300, timeh, half(mod(y,10)));"
         "}\n";
-    
+
+    SetActionFunction([&](IControl* pCaller) {
+
+      SetAnimation([&](IControl* pCaller) {
+
+        float* pInputLoc = (float*)fInputs.get();
+        *pInputLoc = (float)pCaller->GetAnimationProgress();
+
+        if (pCaller->GetAnimationProgress() > 1.) {
+          pCaller->OnEndAnimation();
+        }
+
+      }, 1000);
+
+    });
+
     Load(bounds.W(), bounds.H());
   }
 
@@ -62,6 +78,7 @@ public:
 
   void OnMouseDown(float x, float y, const IMouseMod& mod) override
   {
+    SetDirty(true);
   }
   
   void Load(SkScalar winWidth, SkScalar winHeight)

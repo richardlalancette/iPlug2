@@ -39,7 +39,7 @@ public:
     
     SkCanvas* pCanvas = static_cast<SkCanvas*>(g.GetDrawContext());
     
-    if(mAnimation)
+    if(mAnimation && GetAnimationFunction())
       DoDraw(SkSize::Make(mRECT.W(), mRECT.H()), pCanvas);
   }
   
