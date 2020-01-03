@@ -15,6 +15,10 @@
  * @copydoc ISkLottieControl
  */
 
+#ifndef IGRAPHICS_SKIA
+#error ISkLottieControl requires the IGRAPHICS_SKIA backend
+#endif
+
 #include "IControl.h"
 #include "SkMatrix.h"
 #include "modules/skottie/include/Skottie.h"
@@ -35,7 +39,7 @@ public:
 
   void Draw(IGraphics& g) override
   {
-    g.FillRect(COLOR_BLACK, mRECT);
+//    g.FillRect(COLOR_BLACK, mRECT);
     
     SkCanvas* pCanvas = static_cast<SkCanvas*>(g.GetDrawContext());
     
@@ -76,6 +80,7 @@ public:
       mAnimationSize = mAnimation->size();
     
       SetActionFunction([&](IControl* pCaller) {
+        if(mAnimation) {
           SetAnimation([&](IControl* pCaller) {
                         auto progress = pCaller->GetAnimationProgress();
                         mAnimation->seekFrameTime((pCaller->GetAnimationDuration().count() / 1000.) * progress, nullptr);
@@ -83,6 +88,7 @@ public:
                         if(progress > 1.f)
                           pCaller->OnEndAnimation();
                      }, mAnimation->duration() * 1000.);
+        }
         });
     }
     else {
