@@ -152,6 +152,15 @@ public:
   }
   
 private:
+  VstIntPtr VSTCanDo(const char* hostString) override
+  {
+    if (!strcmp(hostString, "hasCockosEmbeddedUI"))
+    {
+      return 0xbeef0000;
+    }
+    
+    return 0;
+  }
 //  template<typename T>
 //  T (*GetFunc(VstInt32 p1, VstIntPtr p2, const char* str = NULL, float p3 = 0.f))()
 //  {
