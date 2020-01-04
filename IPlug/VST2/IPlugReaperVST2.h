@@ -160,8 +160,9 @@ public:
   virtual void OnCreateEmbeddedUI() { /* No Op */ };
   virtual void OnDestroyEmbeddedUI() { /* No Op */ };
   virtual void OnEmbeddedUIMouseOver(int mouseX, int mouseY) { /* No Op */ }
-  virtual void OnEmbeddedUIMouseLeftDown(int mouseX, int mouseY, bool down) { /* No Op */ }
-  virtual void OnEmbeddedUIMouseRightDown(int mouseX, int mouseY, bool down) { /* No Op */ }
+  virtual void OnEmbeddedUIMouseLeft(int mouseX, int mouseY, bool down) { /* No Op */ }
+  virtual void OnEmbeddedUIMouseRight(int mouseX, int mouseY, bool down) { /* No Op */ }
+  virtual void OnEmbeddedUIResize(int w, int h) { /* No Op */ };
   virtual void DrawEmbeddedUI(LICE_IBitmap* pBitmap, int mouseX, int mouseY, bool leftMouseDown, bool rightMouseDown)
   {
     LICE_FillRect(pBitmap, 0, 0, pBitmap->getWidth(), pBitmap->getHeight(), LICE_RGBA(255, 255, 255, 255), 1.f, 0);
@@ -192,14 +193,14 @@ private:
         case WM_LBUTTONUP:
         {
           REAPER_inline_positioninfo* pInfo = reinterpret_cast<REAPER_inline_positioninfo*>(ptr);
-          OnEmbeddedUIMouseLeftDown(pInfo->mouse_x, pInfo->mouse_y, message == WM_LBUTTONDOWN);
+          OnEmbeddedUIMouseLeft(pInfo->mouse_x, pInfo->mouse_y, message == WM_LBUTTONDOWN);
           return 0;
         }
         case WM_RBUTTONDOWN:
         case WM_RBUTTONUP:
         {
           REAPER_inline_positioninfo* pInfo = reinterpret_cast<REAPER_inline_positioninfo*>(ptr);
-          OnEmbeddedUIMouseRightDown(pInfo->mouse_x, pInfo->mouse_y, message == WM_RBUTTONDOWN);
+          OnEmbeddedUIMouseRight(pInfo->mouse_x, pInfo->mouse_y, message == WM_RBUTTONDOWN);
           return 0;
         }
         case WM_GETMINMAXINFO:
@@ -217,6 +218,17 @@ private:
         {
           LICE_IBitmap* pBitmap = FromVstPtr<LICE_IBitmap>(value);
           REAPER_inline_positioninfo* pInfo = reinterpret_cast<REAPER_inline_positioninfo*>(ptr);
+          
+          static int oldWidth = 0;
+          static int oldHeight = 0;
+          
+          if(pInfo->width != oldWidth || pInfo->height != oldHeight)
+          {
+            OnEmbeddedUIResize(pInfo->width, pInfo->height);
+            oldWidth = pInfo->width;
+            oldHeight = pInfo->height;
+          }
+          
           int extraFlag = 0;
           if(pInfo->extraParms[0])
             extraFlag = (int)(INT_PTR) pInfo->extraParms[0];
