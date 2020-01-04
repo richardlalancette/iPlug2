@@ -10,12 +10,15 @@
 
 #pragma once
 
+#include "aeffect.h"
+
 #include "IPlugVST2.h"
 #include "reaper_plugin.h"
 #include "video_processor.h"
 
 #define REAPERAPI_IMPLEMENT
 #include "reaper_plugin_functions.h"
+#include "lice.h"
 
 bool (*DoFxLastTweakParmCtxMenu2)(void* pFXDSP, void* pHWND, int xpos, int ypos, const char* headerStr);
 
@@ -151,7 +154,85 @@ public:
     }
   }
   
+  virtual void GetEmbeddedUIPrefferedAspectRatio(int& numerator, int& denominator) { numerator = 1; denominator = 1; };
+  virtual void GetEmbeddedUIMinimumAspectRatio(int& numerator, int& denominator) { numerator = 1; denominator = 1; };
+
+  virtual void OnCreateEmbeddedUI() { /* No Op */ };
+  virtual void OnDestroyEmbeddedUI() { /* No Op */ };
+  virtual void OnEmbeddedUIMouseOver(int mouseX, int mouseY) { /* No Op */ }
+  virtual void OnEmbeddedUIMouseLeftDown(int mouseX, int mouseY, bool down) { /* No Op */ }
+  virtual void OnEmbeddedUIMouseRightDown(int mouseX, int mouseY, bool down) { /* No Op */ }
+  virtual void DrawEmbeddedUI(LICE_IBitmap* pBitmap, int mouseX, int mouseY, bool leftMouseDown, bool rightMouseDown)
+  {
+    LICE_FillRect(pBitmap, 0, 0, pBitmap->getWidth(), pBitmap->getHeight(), LICE_RGBA(255, 255, 255, 255), 1.f, 0);
+    
+    if(leftMouseDown || rightMouseDown)
+      LICE_FillCircle(pBitmap, mouseX, mouseY, 5.f, leftMouseDown ? LICE_RGBA(255, 0, 0, 255) : LICE_RGBA(0, 255, 0, 255), 1.f, 0, true);
+  };
+
 private:
+  VstIntPtr VSTVendorSpecific(VstInt32 idx, VstIntPtr value, void* ptr, float opt) override
+  {
+    if(idx == AEffectOpcodes::__effEditDrawDeprecated)
+    {
+      int message = (int) opt;
+      
+      switch (message) {
+        case 0: return 1;
+        case WM_CREATE: OnCreateEmbeddedUI(); return 1;
+        case WM_DESTROY: OnDestroyEmbeddedUI(); return 1;
+        //case WM_SETCURSOR: return HCURSOR;
+        case WM_MOUSEMOVE:
+        {
+          REAPER_inline_positioninfo* pInfo = reinterpret_cast<REAPER_inline_positioninfo*>(ptr);
+          OnEmbeddedUIMouseOver(pInfo->mouse_x, pInfo->mouse_y);
+          return 0;
+        }
+        case WM_LBUTTONDOWN:
+        case WM_LBUTTONUP:
+        {
+          REAPER_inline_positioninfo* pInfo = reinterpret_cast<REAPER_inline_positioninfo*>(ptr);
+          OnEmbeddedUIMouseLeftDown(pInfo->mouse_x, pInfo->mouse_y, message == WM_LBUTTONDOWN);
+          return 0;
+        }
+        case WM_RBUTTONDOWN:
+        case WM_RBUTTONUP:
+        {
+          REAPER_inline_positioninfo* pInfo = reinterpret_cast<REAPER_inline_positioninfo*>(ptr);
+          OnEmbeddedUIMouseRightDown(pInfo->mouse_x, pInfo->mouse_y, message == WM_RBUTTONDOWN);
+          return 0;
+        }
+        case WM_GETMINMAXINFO:
+        {
+          MINMAXINFO* pInfo = reinterpret_cast<MINMAXINFO*>(ptr);
+          int aspectNumerator;
+          int aspectDenominator;
+          GetEmbeddedUIPrefferedAspectRatio(aspectNumerator, aspectDenominator);
+          pInfo->ptReserved.x = (aspectNumerator<<16)/aspectDenominator;
+          GetEmbeddedUIMinimumAspectRatio(aspectNumerator, aspectDenominator);
+          pInfo->ptReserved.y = (aspectNumerator<<16)/aspectDenominator;
+          return 1;
+        }
+        case WM_PAINT:
+        {
+          LICE_IBitmap* pBitmap = FromVstPtr<LICE_IBitmap>(value);
+          REAPER_inline_positioninfo* pInfo = reinterpret_cast<REAPER_inline_positioninfo*>(ptr);
+          int extraFlag = 0;
+          if(pInfo->extraParms[0])
+            extraFlag = (int)(INT_PTR) pInfo->extraParms[0];
+          
+//          if(extraFlag != 1)
+          DrawEmbeddedUI(pBitmap, pInfo->mouse_x, pInfo->mouse_y, extraFlag & 0x10000, extraFlag & 0x20000);
+          
+          return 1;
+        }
+        default:
+          return 0;
+      }
+    }
+    return 0;
+  }
+
   VstIntPtr VSTCanDo(const char* hostString) override
   {
     if (!strcmp(hostString, "hasCockosEmbeddedUI"))
