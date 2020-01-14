@@ -55,6 +55,12 @@ jobs:
     condition: eq(variables.buildPlatform, 'x64')
     displayName: Build SKIA
 
+  - script: |
+      cd Dependencies\IGraphics
+      call build-resvg-win.bat
+    condition: eq(variables.buildPlatform, 'x64')
+    displayName: Build Resvg
+    
   - bash: |
       cd ./Dependencies/Build
       ./../IGraphics/package-deps-src.sh
@@ -122,17 +128,15 @@ jobs:
   condition: and(eq(variables.build_deps, true), eq(variables.build_mac, true))
 
   pool:
-    vmImage: 'macos-10.13'
+    vmImage: 'macOS-10.14'
   steps:
   - checkout: none
 
   - template: get_src_artifact.yml
 
   - bash: |
-      #tmp force cairo rebuild
-      rm -r ./Dependencies/Build/src/cairo
       cd ./Dependencies/IGraphics
-      ./build-igraphics-libs-mac.sh
+      ./build-libs-mac.sh
     displayName: Build Graphics Dependencies
 
   - bash: |
