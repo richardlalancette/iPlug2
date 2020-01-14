@@ -39,6 +39,10 @@ if [ "$1" = "Release" ]; then
 
   ninja -C ../../tmp/skia/Release
 
+  if [ ! -d ../../win/x64/Release ]; then
+    mkdir -p ../../win/x64/Release
+  fi
+
   mv ../../tmp/skia/Release/skia.lib ../../win/x64/Release
   mv ../../tmp/skia/Release/skottie.lib ../../win/x64/Release
   mv ../../tmp/skia/Release/sksg.lib ../../win/x64/Release
@@ -77,6 +81,10 @@ elif [ "$1" = "Debug" ]; then
   '
 
   ninja -C ../../tmp/skia/Debug
+
+  if [ ! -d ../../win/x64/Debug ]; then
+    mkdir -p ../../win/x64/Debug
+  fi
 
   mv ../../tmp/skia/Debug/skia.lib ../../win/x64/Debug
   mv ../../tmp/skia/Debug/skottie.lib ../../win/x64/Debug
