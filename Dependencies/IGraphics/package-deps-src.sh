@@ -34,5 +34,7 @@ mv ./skia_experimental_tmp ./src/skia/experimental/svg/model
 mv ./skia_src_core_tmp ./src/skia/src/core
 mv ./skia_src_xml_tmp ./src/skia/src/xml
 
-mkdir -p ./src/resvg/capi
-mv resvg.h ./src/resvg/capi
+if [ -f ./resvg.h ]; then
+  mkdir -p ./src/resvg/capi
+  mv resvg.h ./src/resvg/capi
+fi
