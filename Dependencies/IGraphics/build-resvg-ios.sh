@@ -2,7 +2,7 @@
 
 cd ../Build/src/resvg
 
-rustup target add aarch64-apple-ios
+rustup target add aarch64-apple-ios x86_64-apple-ios
 export SKIA_DIR=$(PWD)/../skia
 export SKIA_LIB_DIR=$(PWD)/../../ios/lib/arm64
 export IPHONEOS_DEPLOYMENT_TARGET=12.0
