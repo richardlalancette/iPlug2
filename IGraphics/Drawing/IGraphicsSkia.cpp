@@ -333,14 +333,14 @@ void IGraphicsSkia::BeginFrame()
     int height = WindowHeight() * GetScreenScale();
     
     // Bind to the current main framebuffer
-    int fbo = 0, samples = 0, stencilBits = 0;
+    GrGLint fbo = 0, samples = 0, stencilBits = 0;
     glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fbo);
     glGetIntegerv(GL_SAMPLES, &samples);
     glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
     
     GrGLFramebufferInfo fbinfo;
     fbinfo.fFBOID = fbo;
-    fbinfo.fFormat = 0x8058;
+    fbinfo.fFormat = 0x8058; //GR_GL_RGBA8
 
     GrBackendRenderTarget backendRT(width, height, samples, stencilBits, fbinfo);
     
@@ -770,6 +770,23 @@ APIBitmap* IGraphicsSkia::CreateAPIBitmap(int width, int height, int scale, doub
 void IGraphicsSkia::UpdateLayer()
 {
   mCanvas = mLayers.empty() ? mSurface->getCanvas() : mLayers.top()->GetAPIBitmap()->GetBitmap()->mSurface->getCanvas();
+}
+
+void IGraphicsSkia::DoRasterizeSVGToAPIBitmap(SVGHolder* pHolder, APIBitmap* pAPIBitmap, float x, float y)
+{
+#ifdef IGRAPHICS_RESVG
+  auto scale = 1.f/(GetScreenScale() * GetDrawScale());
+  uint32_t width = pAPIBitmap->GetWidth();
+  uint32_t height = pAPIBitmap->GetHeight();
+  SkCanvas* pCanvas = pAPIBitmap->GetBitmap()->mSurface->getCanvas();
+  
+  pCanvas->translate(x, y);
+  pCanvas->scale(scale, scale);
+
+  assert(pHolder->mRenderTree);
+
+  resvg_skia_render_to_canvas(pHolder->mRenderTree, &pHolder->mOptions, { width, height }, pCanvas);
+#endif
 }
 
 static size_t CalcRowBytes(int width)
