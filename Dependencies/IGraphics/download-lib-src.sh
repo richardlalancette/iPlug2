@@ -18,7 +18,7 @@ PNG_VERSION=v1.6.35
 ZLIB_VERSION=zlib-1.2.11
 # SKIA_VERSION=chrome/m80
 SKIA_VERSION=master
-RESVG_VERSION=v0.8.0
+RESVG_VERSION=skiafilltype
 HB_VERSION=harfbuzz-2.6.1
 
 # URLs where tarballs of releases can be downloaded - no trailing slash
@@ -29,7 +29,7 @@ ZLIB_URL=https://www.zlib.net
 PIXMAN_URL=https://cairographics.org/releases
 FREETYPE_URL=https://download.savannah.gnu.org/releases/freetype
 SKIA_URL=https://github.com/google/skia.git
-RESVG_URL=https://github.com/RazrFalcon/resvg/archive
+RESVG_URL=https://github.com/olilarkin/resvg.git
 HB_URL=https://www.freedesktop.org/software/harfbuzz/release
 
 echo "IGRAPHICS_DEPS_DIR:" $IGRAPHICS_DEPS_DIR
@@ -278,17 +278,20 @@ if [ -d "$SRC_DIR/resvg" ]
   echo "Found resvg"
  else
   echo "Downloading resvg..."
-  if [ -e resvg-$RESVG_VERSION.tar.gz ]
-  then
-    echo "Tarball Present..."
-  else
-    curl -L --progress-bar -o resvg-$RESVG_VERSION.tar.gz $RESVG_URL/$RESVG_VERSION.tar.gz
-  fi
-  echo "Unpacking..."
-  tar -xf resvg-$RESVG_VERSION.tar.gz
-  echo "Removing tarball: TODO: fixme..."
-  rm resvg-$RESVG_VERSION.tar.gz
-  mv resvg* "$SRC_DIR/resvg"
+  git clone $RESVG_URL "$SRC_DIR/resvg"
+  cd "$SRC_DIR/resvg"
+  git checkout $RESVG_VERSION
+  # if [ -e resvg-$RESVG_VERSION.tar.gz ]
+  # then
+  #   echo "Tarball Present..."
+  # else
+  #   curl -L --progress-bar -o resvg-$RESVG_VERSION.tar.gz $RESVG_URL/$RESVG_VERSION.tar.gz
+  # fi
+  # echo "Unpacking..."
+  # tar -xf resvg-$RESVG_VERSION.tar.gz
+  # echo "Removing tarball: TODO: fixme..."
+  # rm resvg-$RESVG_VERSION.tar.gz
+  # mv resvg* "$SRC_DIR/resvg"
 fi
 
 #rm -r $DL_DIR
