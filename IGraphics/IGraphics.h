@@ -53,13 +53,6 @@
 #include "IGraphicsImGui.h"
 #endif
 
-#ifdef IGRAPHICS_RESVG
-#pragma comment(lib, "resvg.lib")
-#pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "userenv.lib")
-#pragma comment(lib, "Msimg32.lib")
-#endif
-
 #include <stack>
 #include <memory>
 #include <vector>
@@ -495,8 +488,8 @@ public:
   
   /** /todo 
    * @param r /todo*/
-  APIBitmap* StartLayer(IControl *owner, const IRECT& r);
-
+  void StartLayer(IControl *owner, const IRECT& r);
+  
   /** /todo
    * @param layer /todo*/
   void ResumeLayer(ILayerPtr& layer);
@@ -552,9 +545,6 @@ public:
   /** /todo
    * @return ILayer* /todo */
   ILayer* PopLayer();
-  
-  void RasterizeSVGToBitmap(const ISVG& svg, APIBitmap* pBitmap, float x, float y);
-  virtual void DoRasterizeSVGToAPIBitmap(SVGHolder* pHolder, APIBitmap* pBitmap, float x, float y) {};
   
 #pragma mark - Drawing API path support
 public:

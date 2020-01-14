@@ -1428,14 +1428,8 @@ public:
     {
       if (!g.CheckLayer(mLayer))
       {
-        APIBitmap* pLayerBitmap = g.StartLayer(this, mRECT);
-        
-#ifdef IGRAPHICS_RESVG
-        g.RasterizeSVGToBitmap(mSVG, pLayerBitmap, mRECT.L, mRECT.T);
-#else
-        if (g.HasPathSupport())
-          g.DrawSVG(mSVG, mRECT);
-#endif
+        g.StartLayer(this, mRECT);
+        g.DrawSVG(mSVG, mRECT);
         mLayer = g.EndLayer();
       }
 

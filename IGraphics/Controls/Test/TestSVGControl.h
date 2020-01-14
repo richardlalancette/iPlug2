@@ -23,10 +23,9 @@
 class TestSVGControl : public IControl
 {
 public:
-  TestSVGControl(const IRECT& bounds, const ISVG& svg, bool hq = false)
+  TestSVGControl(const IRECT& bounds, const ISVG& svg)
   : IControl(bounds)
   , mSVG(svg)
-  , mHQ(hq)
   {
     SetTooltip("TestSVGControl - Click or Drag 'n drop here to load a new SVG.");
   }
@@ -36,27 +35,18 @@ public:
     g.DrawDottedRect(COLOR_BLACK, mRECT);
     g.FillRect(mMouseIsOver ? COLOR_TRANSLUCENT : COLOR_TRANSPARENT, mRECT);
 
-    if(mSVG.IsValid())
-    {
 #if 1
-      if (!g.CheckLayer(mLayer))
-      {
-        auto layerBitmap = g.StartLayer(this, mRECT);
-        
-#ifdef IGRAPHICS_RESVG
-        if(mHQ)
-          g.RasterizeSVGToBitmap(mSVG, layerBitmap, mRECT.L, mRECT.T);
-        else
-#endif
-          g.DrawSVG(mSVG, mRECT);
-        
-        mLayer = g.EndLayer();
-      }
-      g.DrawLayer(mLayer);
-#else
+    if (!g.CheckLayer(mLayer))
+    {
+      g.StartLayer(this, mRECT);
       g.DrawSVG(mSVG, mRECT);
-#endif
+      mLayer = g.EndLayer();
     }
+
+    g.DrawLayer(mLayer);
+#else
+    g.DrawSVG(mSVG, mRECT);
+#endif
   }
 
   void OnMouseDown(float x, float y, const IMouseMod& mod) override
@@ -67,29 +57,24 @@ public:
     GetUI()->PromptForFile(file, path, EFileAction::Open, "svg");
 
     if(file.GetLength())
-      LoadSVG(file.Get());
+      SetSVG(GetUI()->LoadSVG(file.Get()));
+
+    SetDirty(false);
   }
 
   void OnDrop(const char* str) override
   {
-    LoadSVG(str);
+    SetSVG(GetUI()->LoadSVG(str));
+    SetDirty(false);
   }
 
-  void LoadSVG(const char* str)
+  void SetSVG(const ISVG& svg)
   {
-    ISVG svg = GetUI()->LoadSVG(str);
-
-    if(svg.IsValid())
-    {
-      mSVG = svg;
-      if(mLayer)
-        mLayer->Invalidate();
-      SetDirty(false);
-    }
+    mSVG = svg;
+    mLayer->Invalidate();
   }
 
 private:
   ILayerPtr mLayer;
   ISVG mSVG;
-  bool mHQ = false;
 };

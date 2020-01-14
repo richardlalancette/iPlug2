@@ -25,14 +25,14 @@
 #include "ptrlist.h"
 #include "heapbuf.h"
 
-//#ifdef IGRAPHICS_SKIA
-//  #include "experimental/svg/model/SkSVGDOM.h"
-//  #include "include/core/SkCanvas.h"
-//  #include "include/core/SkStream.h"
-//  #include "src/xml/SkDOM.h"
-//#else
+#ifdef IGRAPHICS_SKIA
+  #include "experimental/svg/model/SkSVGDOM.h"
+  #include "include/core/SkCanvas.h"
+  #include "include/core/SkStream.h"
+  #include "src/xml/SkDOM.h"
+#else
   #include "nanosvg.h"
-//#endif
+#endif
 
 #include "IPlugPlatform.h"
 
@@ -81,17 +81,6 @@
   #define FONT_DESCRIPTOR_TYPE std::pair<WDL_String, WDL_String>*
 #else 
   // NO_IGRAPHICS
-#endif
-
-#ifdef IGRAPHICS_RESVG
-  #ifdef IGRAPHICS_SKIA
-    #define RESVG_SKIA_BACKEND
-  #elif defined IGRAPHICS_CAIRO || defined IGRAPHICS_NANOVG
-    #define RESVG_CAIRO_BACKEND
-  #else
-    #error IGRAPHICS_RESVG not supported with this backend
-  #endif
-  #include "resvg.h"
 #endif
 
 BEGIN_IPLUG_NAMESPACE
@@ -461,65 +450,47 @@ protected:
 
 using PlatformFontPtr = std::unique_ptr<PlatformFont>;
 
-//#ifdef IGRAPHICS_SKIA
-//struct SVGHolder
-//{
-//  SVGHolder(sk_sp<SkSVGDOM> svgDom)
-//  : mSVGDom(svgDom)
-//  {
-//  }
-//
-//  ~SVGHolder()
-//  {
-//    mSVGDom = nullptr;
-//  }
-//
-//  SVGHolder(const SVGHolder&) = delete;
-//  SVGHolder& operator=(const SVGHolder&) = delete;
-//
-//  sk_sp<SkSVGDOM> mSVGDom;
-//};
-//#else
+#ifdef IGRAPHICS_SKIA
+struct SVGHolder
+{
+  SVGHolder(sk_sp<SkSVGDOM> svgDom)
+  : mSVGDom(svgDom)
+  {
+  }
+  
+  ~SVGHolder()
+  {
+    mSVGDom = nullptr;
+  }
+  
+  SVGHolder(const SVGHolder&) = delete;
+  SVGHolder& operator=(const SVGHolder&) = delete;
+  
+  sk_sp<SkSVGDOM> mSVGDom;
+};
+#else
 /** Used internally to manage SVG data*/
 struct SVGHolder
 {
-  NSVGimage* mImage = nullptr;
-#ifdef IGRAPHICS_RESVG
-  resvg_render_tree* mRenderTree = nullptr;
-  resvg_options mOptions;
-#endif
-  
-#ifdef IGRAPHICS_RESVG
-  SVGHolder(NSVGimage* pImage, resvg_render_tree* pRenderTree, const resvg_options& opt)
-  : mImage(pImage)
-  , mRenderTree(pRenderTree)
-  , mOptions(opt)
-  {
-  }
-#else
   SVGHolder(NSVGimage* pImage)
   : mImage(pImage)
   {
   }
-#endif
   
   ~SVGHolder()
   {
     if(mImage)
       nsvgDelete(mImage);
     
-#ifdef IGRAPHICS_RESVG
-    if(mRenderTree)
-      resvg_tree_destroy(mRenderTree);
-#endif
-    
     mImage = nullptr;
   }
   
   SVGHolder(const SVGHolder&) = delete;
   SVGHolder& operator=(const SVGHolder&) = delete;
+  
+  NSVGimage* mImage = nullptr;
 };
-//#endif
+#endif
 
 /** Used internally to store data statically, making sure memory is not wasted when there are multiple plug-in instances loaded */
 template <class T>

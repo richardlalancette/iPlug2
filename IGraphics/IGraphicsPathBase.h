@@ -480,17 +480,9 @@ private:
   
   void DoDrawSVG(const ISVG& svg)
   {
-//#ifdef IGRAPHICS_SKIA
-//    SkCanvas* canvas = static_cast<SkCanvas*>(GetDrawContext());
-//    svg.mSVGDom->render(canvas);
-//#else
-#if defined IGRAPHICS_RESVG && defined IGRAPHICS_SKIA
-    resvg_options opt;
-    resvg_init_options(&opt);
-    opt.font_family = "Times New Roman";
-    opt.languages = "en";
-    opt.dpi = 72;
-    resvg_skia_render_to_canvas(svg.mRenderTree, &opt, {600, 600}, GetDrawContext());
+#ifdef IGRAPHICS_SKIA
+    SkCanvas* canvas = static_cast<SkCanvas*>(GetDrawContext());
+    svg.mSVGDom->render(canvas);
 #else
     NSVGimage* pImage = svg.mImage;
     

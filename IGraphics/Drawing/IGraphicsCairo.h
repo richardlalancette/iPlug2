@@ -26,8 +26,8 @@
   #pragma comment(lib, "libpng.lib")
   #pragma comment(lib, "zlib.lib")
 
-  #include "cairo.h"
-  #include "cairo-win32.h"
+  #include "cairo/src/cairo.h"
+  #include "cairo/src/cairo-win32.h"
 #else
   #error NOT IMPLEMENTED
 #endif
@@ -91,13 +91,9 @@ protected:
   void DoDrawText(const IText& text, const char* str, const IRECT& bounds, const IBlend* pBlend) override;
 
   void SetCairoSourcePattern(cairo_t* context, const IPattern& pattern, const IBlend* pBlend);
-
-#ifdef IGRAPHICS_RESVG
-  void DoRasterizeSVGToAPIBitmap(SVGHolder* pHolder, APIBitmap* pAPIBitmap, float x, float y) override;
-#endif
-
-private:
   
+private:
+    
   void PrepareAndMeasureText(const IText& text, const char* str, IRECT& r, double& x, double & y, cairo_glyph_t*& pGlyphs, int& numGlyphs) const;
     
   void PathTransformSetMatrix(const IMatrix& m) override;
