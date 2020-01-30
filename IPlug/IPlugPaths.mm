@@ -226,6 +226,16 @@ EResourceLocation LocateResource(const char* name, const char* type, WDL_String&
   return EResourceLocation::kNotFound;
 }
 
+bool AppIsSandboxed()
+{
+  NSString* pHomeDir = NSHomeDirectory();
+  
+  if ([pHomeDir containsString:@"Library/Containers/"])
+    return true;
+  else
+    return false;
+}
+
 #elif defined OS_IOS
 #pragma mark - IOS
 
@@ -240,10 +250,10 @@ void PluginPath(WDL_String& path, PluginIDType bundleID)
 void BundleResourcePath(WDL_String& path, PluginIDType bundleID)
 {
   NSBundle* pBundle = [NSBundle mainBundle];
-  
-  if([[pBundle bundleIdentifier] containsString:@"AUv3"])
-    pBundle = [NSBundle bundleWithIdentifier:[NSString stringWithCString:bundleID encoding:NSUTF8StringEncoding]];
-  
+    
+  if(IsAuv3AppExtension())
+    pBundle = [NSBundle bundleWithPath: [[[pBundle bundlePath] stringByDeletingLastPathComponent] stringByDeletingLastPathComponent]];
+
   path.Set([[pBundle resourcePath] UTF8String]);
 }
 
@@ -342,6 +352,11 @@ EResourceLocation LocateResource(const char* name, const char* type, WDL_String&
   }
   
   return EResourceLocation::kNotFound;
+}
+
+bool AppIsSandboxed()
+{
+  return true;
 }
 
 #endif

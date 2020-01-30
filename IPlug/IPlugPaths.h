@@ -41,8 +41,11 @@ extern void HostPath(WDL_String& path, const char* bundleID = 0);
  *  @param pExtra This should either be a const char* to bundleID (macOS) or an HMODULE handle (windows) */
 extern void PluginPath(WDL_String& path, PluginIDType pExtra);
 
-/** @param path WDL_String reference where the path will be put on success or empty string on failure
- *  @param pExtra This should either be a const char* to bundleID (macOS) or an HMODULE handle (windows) */
+/** Get the path to the plug-in bundle resource path. On macOS and iOS if this is called in an AUv3 app extension it will return the bundle of the parent app
+ * iOS bundles are flat, so the path is just to the .app where as macOS bundles contain a resources subfolder
+ * On Windows this is only useful for VST3 plug-ins which have a "bundle" with a resource path since v3.6
+ * @param path WDL_String reference where the path will be put on success or empty string on failure
+ * @param pExtra This should either be a const char* to bundleID (macOS/iOS) or an HMODULE handle (windows) */
 extern void BundleResourcePath(WDL_String& path, PluginIDType pExtra = 0);
 
 /** @param path WDL_String reference where the path will be put on success or empty string on failure */
@@ -88,6 +91,9 @@ extern EResourceLocation LocateResource(const char* fileNameOrResID, const char*
  * @param type The resource type in lower or upper case, e.g. ttf or TTF for a truetype font
  * @return const void pointer to the data if successfull on windows. Returns nullptr if unsuccessfull or on platforms other than windows */
 extern const void* LoadWinResource(const char* resID, const char* type, int& sizeInBytes, void* pHInstance);
+
+/** @return \c true if the app is sandboxed (and therefore file access etc is restricted) */
+extern bool AppIsSandboxed();
 
 #ifdef OS_IOS
 extern bool IsAuv3AppExtension();

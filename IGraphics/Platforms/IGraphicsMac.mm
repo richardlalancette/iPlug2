@@ -61,17 +61,6 @@ IGraphicsMac::~IGraphicsMac()
   CloseWindow();
 }
 
-bool IGraphicsMac::IsSandboxed()
-{
-  NSString* pHomeDir = NSHomeDirectory();
-
-  if ([pHomeDir containsString:@"Library/Containers/"])
-  {
-    return true;
-  }
-  return false;
-}
-
 PlatformFontPtr IGraphicsMac::LoadPlatformFont(const char* fontID, const char* fileNameOrResID)
 {
   return CoreTextHelpers::LoadPlatformFont(fontID, fileNameOrResID, GetBundleID(), GetSharedResourcesSubPath());
@@ -525,7 +514,7 @@ bool IGraphicsMac::PromptForColor(IColor& color, const char* str, IColorPickerHa
   return false;
 }
 
-IPopupMenu* IGraphicsMac::CreatePlatformPopupMenu(IPopupMenu& menu, const IRECT& bounds)
+IPopupMenu* IGraphicsMac::CreatePlatformPopupMenu(IPopupMenu& menu, const IRECT& bounds, bool& isAsync)
 {
   IPopupMenu* pReturnMenu = nullptr;
 
