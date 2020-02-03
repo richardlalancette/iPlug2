@@ -53,24 +53,20 @@ const char* const DEFAULT_FONT = "Roboto-Regular";
 static constexpr float DEFAULT_TEXT_SIZE = 14.f;
 static constexpr int FONT_LEN = 64;
 
-/** @enum EType Blend type
- * \todo This could use some documentation
- */
+/** @enum EBlend Porter-Duff blend mode/compositing operators */
 enum class EBlend
 {
-  Default,
-  Clobber,
-  SourceOver,
-  SourceIn,
-  SourceOut,
-  SourceAtop,
-  DestOver,
-  DestIn,
-  DestOut,
-  DestAtop,
+  SrcOver,
+  SrcIn,
+  SrcOut,
+  SrcAtop,
+  DstOver,
+  DstIn,
+  DstOut,
+  DstAtop,
   Add,
   XOR,
-  None = EBlend::Default
+  Default = SrcOver
 };
 
 /** /todo */
@@ -88,6 +84,14 @@ enum class EAlign { Near, Center, Far };
 /** /todo */
 enum class EVAlign { Top, Middle, Bottom };
 
+/** Types of Gesture Recongnizer */
+enum class EGestureType { Unknown, DoubleTap, TripleTap, LongPress1, LongPress2, SwipeLeft, SwipeRight, SwipeUp, SwipeDown, Pinch, Rotate, Pan};
+
+static const char* kGestureTypeStrs[12] = { "Unknown", "DoubleTap", "TripleTap", "LongPress1", "LongPress2", "SwipeLeft", "SwipeRight", "SwipeUp", "SwipeDown", "Pinch", "Rotate", "Pan"};
+
+/** Distinguised gesture states */
+enum class EGestureState { Unknown, Began, InProcess, Ended };
+
 /** /todo */
 enum EVColor
 {
@@ -100,7 +104,6 @@ enum EVColor
   kHL,        // highlight: mouse over or focus
   kSH,        // shadow
   kX1,        // extra1
-  kGR = kX1,  // greyed
   kX2,        // extra2
   kX3,        // extra3
   kNumDefaultVColors
@@ -114,7 +117,7 @@ static const char* kVColorStrs[kNumDefaultVColors] =
   "frame",
   "highlight",
   "shadow",
-  "extra1/greyed",
+  "extra1",
   "extra2",
   "extra3"
 };

@@ -59,26 +59,30 @@ public:
   Steinberg::tresult PLUGIN_API notify(Steinberg::Vst::IMessage* message) override;
 
   // IMidiMapping
-  Steinberg::tresult PLUGIN_API getMidiControllerAssignment(Steinberg::int32 busIndex, Steinberg::int16 channel, Steinberg::Vst::CtrlNumber midiControllerNumber, Steinberg::Vst::ParamID& tag) override;
+  Steinberg::tresult PLUGIN_API getMidiControllerAssignment(Steinberg::int32 busIndex, Steinberg::int16 channel, Steinberg::Vst::CtrlNumber midiCCNumber, Steinberg::Vst::ParamID& tag) override;
 
   // IEditControllerEx
   Steinberg::tresult PLUGIN_API getProgramName(Steinberg::Vst::ProgramListID listId, Steinberg::int32 programIndex, Steinberg::Vst::String128 name /*out*/) override;
   
-  DELEGATE_REFCOUNT(Steinberg::Vst::EditControllerEx1)
-  Steinberg::tresult PLUGIN_API queryInterface(const char* iid, void** obj) override;
+  // Interface
+  OBJ_METHODS(IPlugVST3Controller, EditControllerEx1)
+  DEFINE_INTERFACES
+  DEF_INTERFACE(IMidiMapping)
+  END_DEFINE_INTERFACES(EditControllerEx1)
+  REFCOUNT_METHODS(EditControllerEx1)
   
   // IPlugAPIBase
   void BeginInformHostOfParamChange(int idx) override { beginEdit(idx); }
   void InformHostOfParamChange(int idx, double normalizedValue) override  { performEdit(idx, normalizedValue); }
   void EndInformHostOfParamChange(int idx) override  { endEdit(idx); }
   void InformHostOfProgramChange() override  { /* TODO: */}
-  bool EditorResizeFromDelegate(int viewWidth, int viewHeight) override;
+  bool EditorResize(int viewWidth, int viewHeight) override;
   void DirtyParametersFromUI() override;
   
   // IEditorDelegate
   void SendMidiMsgFromUI(const IMidiMsg& msg) override;
   void SendSysexMsgFromUI(const ISysEx& msg) override;
-  void SendArbitraryMsgFromUI(int messageTag, int controlTag = kNoTag, int dataSize = 0, const void* pData = nullptr) override;
+  void SendArbitraryMsgFromUI(int msgTag, int ctrlTag = kNoTag, int dataSize = 0, const void* pData = nullptr) override;
 
   Steinberg::Vst::IComponentHandler* GetComponentHandler() const { return componentHandler; }
   ViewType* GetView() const { return mView; }
@@ -86,6 +90,7 @@ public:
 private:
   ViewType* mView = nullptr;
   bool mPlugIsInstrument;
+  bool mDoesMidiIn;
   Steinberg::FUID mProcessorGUID;
 };
 

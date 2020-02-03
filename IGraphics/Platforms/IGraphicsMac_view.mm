@@ -453,6 +453,8 @@ extern StaticStorage<CoreTextFontDescriptor> sFontDescriptorCache;
   NSRect r = NSMakeRect(0.f, 0.f, (float) pGraphics->WindowWidth(), (float) pGraphics->WindowHeight());
   self = [super initWithFrame:r];
   
+  mMouseOutDuringDrag = false;
+    
 #if defined IGRAPHICS_NANOVG || defined IGRAPHICS_SKIA
   if (!self.wantsLayer) {
     #if defined IGRAPHICS_METAL
@@ -552,7 +554,9 @@ extern StaticStorage<CoreTextFontDescriptor> sFontDescriptorCache;
   
   CGFloat newScale = [pWindow backingScaleFactor];
   
-  if (mGraphics->GetDrawContext() && newScale != mGraphics->GetScreenScale())
+  mGraphics->SetPlatformContext(nullptr);
+  
+  if (newScale != mGraphics->GetScreenScale())
     mGraphics->SetScreenScale(newScale);
 
 #if defined IGRAPHICS_GL
@@ -565,10 +569,8 @@ extern StaticStorage<CoreTextFontDescriptor> sFontDescriptorCache;
 
 - (CGContextRef) getCGContextRef
 {
-  CGContextRef pCGC = (CGContextRef) [[NSGraphicsContext currentContext] graphicsPort];
-  NSGraphicsContext* gc = [NSGraphicsContext graphicsContextWithGraphicsPort: pCGC flipped: YES];
-  pCGC = (CGContextRef) [gc graphicsPort];
-  return pCGC;
+  CGContextRef pCGC = [NSGraphicsContext currentContext].CGContext;
+  return [NSGraphicsContext graphicsContextWithCGContext: pCGC flipped: YES].CGContext;
 }
 
 // not called for layer backed views
@@ -670,12 +672,26 @@ extern StaticStorage<CoreTextFontDescriptor> sFontDescriptorCache;
 
 - (void) mouseEntered: (NSEvent *)event
 {
-  mGraphics->OnSetCursor();
+  mMouseOutDuringDrag = false;
+  if (mGraphics)
+  {
+    mGraphics->OnSetCursor();
+  }
 }
 
 - (void) mouseExited: (NSEvent *)event
 {
-  mGraphics->OnMouseOut();
+  if (mGraphics)
+  {
+    if (!mGraphics->GetCapturedControl())
+    {
+      mGraphics->OnMouseOut();
+    }
+    else
+    {
+      mMouseOutDuringDrag = true;
+    }
+  }
 }
 
 - (void) mouseDown: (NSEvent*) pEvent
@@ -698,7 +714,14 @@ extern StaticStorage<CoreTextFontDescriptor> sFontDescriptorCache;
 {
   IMouseInfo info = [self getMouseLeft:pEvent];
   if (mGraphics)
+  {
     mGraphics->OnMouseUp(info.x, info.y, info.ms);
+    if (mMouseOutDuringDrag)
+    {
+      mGraphics->OnMouseOut();
+      mMouseOutDuringDrag = false;
+    }
+  }
 }
 
 - (void) mouseDragged: (NSEvent*) pEvent
@@ -988,7 +1011,7 @@ static void MakeCursorFromName(NSCursor*& cursor, const char *name)
 {
   IGRAPHICS_MENU_RCVR* pDummyView = [[[IGRAPHICS_MENU_RCVR alloc] initWithFrame:bounds] autorelease];
   NSMenu* pNSMenu = [[[IGRAPHICS_MENU alloc] initWithIPopupMenuAndReciever:&menu : pDummyView] autorelease];
-  NSPoint wp = {bounds.origin.x, bounds.origin.y - 4};
+  NSPoint wp = {bounds.origin.x, bounds.origin.y + 4};
 
   [pNSMenu popUpMenuPositioningItem:nil atLocation:wp inView:self];
   
@@ -1003,7 +1026,8 @@ static void MakeCursorFromName(NSCursor*& cursor, const char *name)
     pIPopupMenu->SetChosenItemIdx((int) chosenItemIdx);
     return pIPopupMenu;
   }
-  else return nullptr;
+  else
+    return nullptr;
 }
 
 - (void) createTextEntry: (int) paramIdx : (const IText&) text : (const char*) str : (int) length : (NSRect) areaRect;
