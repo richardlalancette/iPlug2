@@ -61,6 +61,15 @@
   using NVGframebuffer = MNVGframebuffer;
 #endif
 
+// if using RESVG with NANOVG, cairo is used to rasterize the SVG
+#if defined OS_WIN && defined IGRAPHICS_RESVG
+  #pragma comment(lib, "cairo.lib")
+  #pragma comment(lib, "pixman.lib")
+  #pragma comment(lib, "freetype.lib")
+  #pragma comment(lib, "libpng.lib")
+  #pragma comment(lib, "zlib.lib")
+#endif
+
 BEGIN_IPLUG_NAMESPACE
 BEGIN_IGRAPHICS_NAMESPACE
 
@@ -115,6 +124,7 @@ public:
   void ReleaseBitmap(const IBitmap& bitmap) override { }; // NO-OP
   void RetainBitmap(const IBitmap& bitmap, const char * cacheName) override { }; // NO-OP
   bool BitmapExtSupported(const char* ext) override;
+  IBitmap RasterizeSVGToBitmap(const char* path, int width, int height, int targetScale) override;
 
   void DeleteFBO(NVGframebuffer* pBuffer);
     

@@ -770,6 +770,34 @@ APIBitmap* IGraphicsSkia::CreateAPIBitmap(int width, int height, int scale, doub
   return new Bitmap(std::move(surface), width, height, scale, drawScale);
 }
 
+IBitmap IGraphicsSkia::RasterizeSVGToBitmap(const char* path, int width, int height, int targetScale)
+{
+  #ifdef IGRAPHICS_RESVG
+  resvg_render_tree* pRenderTree = nullptr;
+  resvg_options opt;
+  resvg_init_options(&opt);
+  opt.font_family = "Times New Roman";
+  opt.languages = "en";
+  opt.dpi = 144.f;
+  opt.path = path;
+  int err = resvg_parse_tree_from_file(path, &opt, &pRenderTree);
+  //  int err = resvg_parse_tree_from_data(svgStr.Get(), svgStr.GetLength(), &opt, &pRenderTree);
+
+  if(err == RESVG_OK && pRenderTree)
+  {
+    APIBitmap* pAPIBitmap = CreateAPIBitmap(width, height, targetScale, 1.f);
+    SkCanvas* pCanvas = pAPIBitmap->GetBitmap()->mSurface->getCanvas();
+    resvg_skia_render_to_canvas(pRenderTree, &opt, { static_cast<uint32_t>(width), static_cast<uint32_t>(height) }, pCanvas);
+    IBitmap bitmap = IBitmap(pAPIBitmap, 1, true, path);
+    RetainBitmap(bitmap, path);
+    return bitmap;
+  }
+  
+  #endif
+  
+  return IBitmap();
+}
+
 void IGraphicsSkia::UpdateLayer()
 {
   mCanvas = mLayers.empty() ? mSurface->getCanvas() : mLayers.top()->GetAPIBitmap()->GetBitmap()->mSurface->getCanvas();

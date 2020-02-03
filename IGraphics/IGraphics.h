@@ -53,6 +53,17 @@
 #include "IGraphicsImGui.h"
 #endif
 
+#ifdef IGRAPHICS_RESVG
+  #ifdef IGRAPHICS_SKIA
+    #define RESVG_SKIA_BACKEND
+  #elif defined IGRAPHICS_CAIRO || defined IGRAPHICS_NANOVG
+    #define RESVG_CAIRO_BACKEND
+  #else
+    #error IGRAPHICS_RESVG not supported with this backend
+  #endif
+  #include "resvg.h"
+#endif
+
 #include <stack>
 #include <memory>
 #include <vector>
@@ -379,6 +390,9 @@ public:
    * @param bitmap /todo */
   virtual void ReleaseBitmap(const IBitmap& bitmap);
 
+  /**  */
+  virtual IBitmap RasterizeSVGToBitmap(const char* pPath, int width, int height, int targetScale) { return IBitmap(); }
+  
   /** /todo 
    * @param src /todo
    * @return IBitmap /todo */

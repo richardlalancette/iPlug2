@@ -360,6 +360,77 @@ APIBitmap* IGraphicsNanoVG::CreateAPIBitmap(int width, int height, int scale, do
   return pAPIBitmap;
 }
 
+IBitmap IGraphicsNanoVG::RasterizeSVGToBitmap(const char* path, int width, int height, int targetScale)
+{
+#ifdef IGRAPHICS_RESVG
+  resvg_render_tree* pRenderTree = nullptr;
+  resvg_options opt;
+  resvg_init_options(&opt);
+  opt.font_family = "Times New Roman";
+  opt.languages = "en";
+  opt.dpi = 72.f;
+  opt.path = path;
+  int err = resvg_parse_tree_from_file(path, &opt, &pRenderTree);
+  //  int err = resvg_parse_tree_from_data(svgStr.Get(), svgStr.GetLength(), &opt, &pRenderTree);
+
+  if(err == RESVG_OK && pRenderTree)
+  {
+    APIBitmap* pAPIBitmap = CreateAPIBitmap(width, height, targetScale, 1.f);
+
+    RawBitmapData data;
+    int stride = cairo_format_stride_for_width (CAIRO_FORMAT_ARGB32, width);
+    data.Resize(stride * height);
+    memset(data.Get(), 0, data.GetSize());
+    cairo_surface_t* pSurface = cairo_image_surface_create_for_data(data.Get(), CAIRO_FORMAT_ARGB32, width, height, stride);
+    cairo_t* cr = cairo_create(pSurface);
+
+  #ifdef IGRAPHICS_GL
+    cairo_matrix_t mat;
+    cairo_matrix_init_identity(&mat);
+    mat.yy = -1.0;
+    cairo_set_matrix(cr, &mat);
+    cairo_translate(cr, 0, -height);
+  #endif
+
+    resvg_cairo_render_to_canvas(pRenderTree, &opt, {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}, cr);
+
+    cairo_surface_flush(pSurface);
+
+    //ARGB -> RGBA (from Cairo png)
+    for (int i = 0; i < data.GetSize(); i += 4)
+    {
+      uint8_t* b = data.Get() + i;
+      uint32_t pixel;
+      uint8_t  alpha;
+      memcpy (&pixel, b, sizeof (uint32_t));
+      alpha = (pixel & 0xff000000) >> 24;
+
+      if (alpha == 0)
+      {
+        b[0] = b[1] = b[2] = b[3] = 0;
+      }
+      else
+      {
+        b[0] = (((pixel & 0xff0000) >> 16) * 255 + alpha / 2) / alpha;
+        b[1] = (((pixel & 0x00ff00) >>  8) * 255 + alpha / 2) / alpha;
+        b[2] = (((pixel & 0x0000ff) >>  0) * 255 + alpha / 2) / alpha;
+        b[3] = alpha;
+      }
+    }
+    nvgUpdateImage(static_cast<NVGcontext*>(GetDrawContext()), pAPIBitmap->GetBitmap(), data.Get());
+
+    cairo_destroy(cr);
+    cairo_surface_destroy(pSurface);
+    
+    IBitmap bitmap = IBitmap(pAPIBitmap, 1, true, path);
+    RetainBitmap(bitmap, path);
+    return bitmap;
+  }
+#endif
+  
+  return IBitmap();
+}
+
 void IGraphicsNanoVG::GetLayerBitmapData(const ILayerPtr& layer, RawBitmapData& data)
 {
   const APIBitmap* pBitmap = layer->GetAPIBitmap();

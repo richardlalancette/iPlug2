@@ -108,6 +108,7 @@ public:
   bool FlippedBitmap() const override { return false; }
 
   APIBitmap* CreateAPIBitmap(int width, int height, int scale, double drawScale) override;
+  IBitmap RasterizeSVGToBitmap(const char* path, int width, int height, int targetScale) override;
 
   void GetLayerBitmapData(const ILayerPtr& layer, RawBitmapData& data) override;
   void ApplyShadowMask(ILayerPtr& layer, RawBitmapData& mask, const IShadow& shadow) override;
