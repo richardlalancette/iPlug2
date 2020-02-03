@@ -25,7 +25,7 @@ echo [build] > .cargo/config
 if [ "$BACKENDS" == "skia-backend" ]; then
   echo rustflags = [\"-L$SKIA_LIB_DIR\", \"-lframework=Metal\", \"-lframework=Foundation\"] >> .cargo/config
 elif [ "$BACKENDS" == "cairo-backend" ]; then
-  echo rustflags = [\"-ldylib=pixman-1\", \"-lframework=Foundation\"] >> .cargo/config
+  echo rustflags = [\"-L$SKIA_LIB_DIR\", \"-lcairo\", \"-lpixman-1\", \"-lframework=Foundation\"] >> .cargo/config
 fi
 
 cargo build --verbose --release --features $BACKENDS
