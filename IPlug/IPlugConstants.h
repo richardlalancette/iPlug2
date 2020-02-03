@@ -111,6 +111,11 @@ static const int MAX_PARAM_DISPLAY_PRECISION = 6;
 #define IDLE_TIMER_RATE 20 // this controls the frequency of data going from processor to editor (and OnIdle calls)
 #endif
 
+
+#ifndef RCCPP_TIMER_RATE
+#define RCCPP_TIMER_RATE 200
+#endif
+
 #ifndef MAX_SYSEX_SIZE
 #define MAX_SYSEX_SIZE 512
 #endif

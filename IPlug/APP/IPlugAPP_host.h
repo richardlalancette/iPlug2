@@ -62,6 +62,13 @@
 #include "RtAudio.h"
 #include "RtMidi.h"
 
+#ifdef IPLUG_RCCPP
+#include "RuntimeObjectSystem/IObjectFactorySystem.h"
+#include "RuntimeObjectSystem/ObjectInterface.h"
+struct IUpdateable;
+struct IRuntimeObjectSystem;
+#endif
+
 #define OFF_TEXT "off"
 
 extern HWND gHWND;
@@ -79,6 +86,9 @@ class IPlugAPP;
 
 /** A class that hosts an IPlug as a standalone app and provides Audio/Midi I/O */
 class IPlugAPPHost
+#ifdef IPLUG_RCCPP
+: public IObjectFactoryListener
+#endif
 {
 public:
   
@@ -215,6 +225,23 @@ public:
 
   IPlugAPP* GetPlug() { return mIPlug.get(); }
 private:
+#ifdef IPLUG_RCCPP
+  bool InitRCCPP();
+  void CleanupRCCPP();
+  void OnRCCPPTimerTick(Timer& t);
+  void OnConstructorsAdded() override;
+
+  std::unique_ptr<Timer> mRCCPTimer;
+
+  // Runtime Systems
+  ICompilerLogger* mCompilerLogger = nullptr;
+  IRuntimeObjectSystem* mRuntimeObjectSystem = nullptr;
+
+  // Runtime object
+  IUpdateable* mUpdateable = nullptr;
+  ObjectId mObjectId;
+#endif
+  
   std::unique_ptr<IPlugAPP> mIPlug = nullptr;
   std::unique_ptr<RtAudio> mDAC = nullptr;
   std::unique_ptr<RtMidiIn> mMidiIn = nullptr;

@@ -2,6 +2,27 @@
 #include "IPlug_include_in_plug_src.h"
 #include "IControls.h"
 
+#include "RuntimeObjectSystem/ObjectInterfacePerModule.h"
+#include "RuntimeObjectSystem/IObject.h"
+#include "IPlugRCCPP_IUpdateable.h"
+#include "IPlugRCCPP_InterfaceIds.h"
+
+class RuntimeObject01 : public TInterface<IID_IUPDATEABLE, IUpdateable>
+{
+public:
+  void OnCompile() override
+  {
+    
+  }
+  
+  void Update(float deltaTime) override
+  {
+  }
+};
+
+REGISTERCLASS(RuntimeObject01);
+
+
 IPlugEffect::IPlugEffect(const InstanceInfo& info)
 : Plugin(info, MakeConfig(kNumParams, kNumPrograms))
 {

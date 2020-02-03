@@ -24,6 +24,23 @@ using namespace iplug;
 
 #define STRBUFSZ 100
 
+#ifdef IPLUG_RCCPP
+#include "RuntimeCompiler/AUArray.h"
+#include "RuntimeCompiler/BuildTool.h"
+#include "RuntimeCompiler/ICompilerLogger.h"
+#include "RuntimeCompiler/FileChangeNotifier.h"
+#include "RuntimeObjectSystem/IObjectFactorySystem.h"
+#include "RuntimeObjectSystem/ObjectFactorySystem/ObjectFactorySystem.h"
+#include "RuntimeObjectSystem/RuntimeObjectSystem.h"
+#include "RuntimeObjectSystem/ObjectInterfacePerModule.h"
+#include "RuntimeObjectSystem/IObject.h"
+
+#include "IPlugRCCPP_IUpdateable.h"
+#include "IPlugRCCPP_InterfaceIds.h"
+#include "IPlugRCCPP_LogSystem.h"
+#endif
+
+
 std::unique_ptr<IPlugAPPHost> IPlugAPPHost::sInstance;
 UINT gSCROLLMSG;
 
@@ -34,6 +51,10 @@ IPlugAPPHost::IPlugAPPHost()
 
 IPlugAPPHost::~IPlugAPPHost()
 {
+#ifdef IPLUG_RCCPP
+  CleanupRCCPP();
+#endif
+  
   mExiting = true;
   
   CloseAudio();
@@ -68,6 +89,10 @@ bool IPlugAPPHost::Init()
   
   mIPlug->OnParamReset(kReset);
   mIPlug->OnActivate(true);
+  
+#ifdef IPLUG_RCCPP
+  InitRCCPP();
+#endif
   
   return true;
 }
@@ -784,3 +809,119 @@ void IPlugAPPHost::ErrorCallback(RtAudioError::Type type, const std::string &err
   //TODO:
 }
 
+#ifdef IPLUG_RCCPP
+void IPlugAPPHost::CleanupRCCPP()
+{
+  if(mRCCPTimer)
+  {
+    mRCCPTimer->Stop();
+  }
+  
+  if(mRuntimeObjectSystem)
+  {
+    mRuntimeObjectSystem->CleanObjectFiles(); // clean temp object files
+  }
+
+  if(mRuntimeObjectSystem && mRuntimeObjectSystem->GetObjectFactorySystem())
+  {
+    mRuntimeObjectSystem->GetObjectFactorySystem()->RemoveListener(this);
+
+    // delete object via correct interface
+    IObject* pObj = mRuntimeObjectSystem->GetObjectFactorySystem()->GetObject(mObjectId);
+    delete pObj;
+  }
+
+  delete mRuntimeObjectSystem;
+  delete mCompilerLogger;
+}
+
+void IPlugAPPHost::OnConstructorsAdded()
+{
+  // This could have resulted in a change of object pointer, so release old and get new one.
+  if(mUpdateable)
+  {
+    IObject* pObj = mRuntimeObjectSystem->GetObjectFactorySystem()->GetObject(mObjectId);
+    pObj->GetInterface(&mUpdateable);
+    
+    if(mUpdateable == nullptr)
+    {
+      delete pObj;
+      mCompilerLogger->LogError( "Error - no updateable interface found\n");
+    }
+  }
+}
+
+bool IPlugAPPHost::InitRCCPP()
+{
+  mRuntimeObjectSystem = new RuntimeObjectSystem;
+  mCompilerLogger = new StdioLogSystem();
+  
+  if(!mRuntimeObjectSystem->Initialise(mCompilerLogger, 0))
+  {
+    mRuntimeObjectSystem = 0;
+    return false;
+  }
+  
+  mRuntimeObjectSystem->GetObjectFactorySystem()->AddListener(this);
+
+//  FileSystemUtils::Path basePath = mRuntimeObjectSystem->FindFile( __FILE__ );
+//  FileSystemUtils::Path includeDir = basePath.ParentPath() / "Include";
+  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IGraphics");
+  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IGraphics/Platforms");
+  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IGraphics/Controls");
+  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IGraphics/Drawing");
+  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IPlug");
+  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IPlug/APP");
+  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IPlug/Extras");
+  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IPlug/Extras/RCCPP");
+  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/WDL");
+  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/Examples/IPlugEffect");
+  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/Dependencies/IGraphics/NanoSVG/src");
+  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/Dependencies/IGraphics/NanoVG/src");
+  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/Dependencies/IGraphics/MetalNanoVG/src");
+
+  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/Dependencies/Build/src/RuntimeCompiledCPlusPlus/Aurora");
+
+  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIGRAPHICS_NANOVG -DIGRAPHICS_METAL -DAPP_API -std=c++14");
+  
+  // construct first object
+  IObjectConstructor* pCtor = mRuntimeObjectSystem->GetObjectFactorySystem()->GetConstructor("RuntimeObject01");
+  
+  if(pCtor)
+  {
+    IObject* pObj = pCtor->Construct();
+    pObj->GetInterface(&mUpdateable);
+    
+    if(mUpdateable == nullptr)
+    {
+      delete pObj;
+      mCompilerLogger->LogError("Error - no updateable interface found\n");
+      return false;
+    }
+    
+    mObjectId = pObj->GetObjectId();
+  }
+
+  mRCCPTimer = std::unique_ptr<Timer>(Timer::Create(std::bind(&IPlugAPPHost::OnRCCPPTimerTick, this, std::placeholders::_1), RCCPP_TIMER_RATE));
+  
+  return true;
+}
+
+void IPlugAPPHost::OnRCCPPTimerTick(Timer& t)
+{
+  //check status of any compile
+  if(mRuntimeObjectSystem->GetIsCompiledComplete())
+  {
+    // load module when compile complete
+    mRuntimeObjectSystem->LoadCompiledModule();
+    mUpdateable->OnCompile();
+  }
+
+  if(!mRuntimeObjectSystem->GetIsCompiling())
+  {
+    const float deltaTime = 1.0f;
+    mRuntimeObjectSystem->GetFileChangeNotifier()->Update(deltaTime);
+    mUpdateable->Update( deltaTime );
+  }
+}
+#endif
