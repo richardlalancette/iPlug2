@@ -54,7 +54,9 @@
     <DEBUG_DEFS>_DEBUG;</DEBUG_DEFS>
     <RELEASE_DEFS>NDEBUG;</RELEASE_DEFS>
     <TRACER_DEFS>TRACER_BUILD;NDEBUG;</TRACER_DEFS>
-    <APP_INC_PATHS>$(IPLUG_PATH)\APP;$(IPLUG_DEPS_PATH)\RTAudio\include;$(IPLUG_DEPS_PATH)\RTAudio;$(IPLUG_DEPS_PATH)\RTMidi</APP_INC_PATHS>
+    <RCCPP_PATH>$(DEPS_PATH)\Build\src\rccpp\Aurora</RCCPP_PATH>
+    <RCCPP_INC_PATHS>$(RCCPP_PATH);$(EXTRAS_PATH)\RCCPP</RCCPP_INC_PATHS>
+    <APP_INC_PATHS>$(IPLUG_PATH)\APP;$(IPLUG_DEPS_PATH)\RTAudio\include;$(IPLUG_DEPS_PATH)\RTAudio;$(IPLUG_DEPS_PATH)\RTMidi;$(RCCPP_INC_PATHS)</APP_INC_PATHS>
     <VST2_INC_PATHS>$(IPLUG_PATH)\VST2;$(VST2_SDK)</VST2_INC_PATHS>
     <VST3_INC_PATHS>$(IPLUG_PATH)\VST3;$(VST3_SDK)</VST3_INC_PATHS>
     <AAX_INC_PATHS>$(IPLUG_PATH)\AAX;$(AAX_SDK)\Interfaces;$(AAX_SDK)\Interfaces\ACF;</AAX_INC_PATHS>
@@ -248,6 +250,12 @@
     </BuildMacro>
     <BuildMacro Include="TRACER_DEFS">
       <Value>$(TRACER_DEFS)</Value>
+    </BuildMacro>
+    <BuildMacro Include="RCCPP_PATH">
+      <Value>$(RCCPP_PATH)</Value>
+    </BuildMacro>
+    <BuildMacro Include="RCCPP_INC_PATHS">
+      <Value>$(RCCPP_INC_PATHS)</Value>
     </BuildMacro>
     <BuildMacro Include="APP_INC_PATHS">
       <Value>$(APP_INC_PATHS)</Value>

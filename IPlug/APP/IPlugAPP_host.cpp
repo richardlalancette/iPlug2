@@ -25,6 +25,11 @@ using namespace iplug;
 #define STRBUFSZ 100
 
 #ifdef IPLUG_RCCPP
+#if defined OS_WIN
+#undef GetObject
+#pragma comment(lib, "RuntimeCompiler.lib")
+#pragma comment(lib, "RuntimeObjectSystem.lib")
+#endif
 #include "RuntimeCompiler/AUArray.h"
 #include "RuntimeCompiler/BuildTool.h"
 #include "RuntimeCompiler/ICompilerLogger.h"
@@ -34,7 +39,6 @@ using namespace iplug;
 #include "RuntimeObjectSystem/RuntimeObjectSystem.h"
 #include "RuntimeObjectSystem/ObjectInterfacePerModule.h"
 #include "RuntimeObjectSystem/IObject.h"
-
 #include "IPlugRCCPP_IUpdateable.h"
 #include "IPlugRCCPP_InterfaceIds.h"
 #include "IPlugRCCPP_LogSystem.h"
@@ -810,6 +814,7 @@ void IPlugAPPHost::ErrorCallback(RtAudioError::Type type, const std::string &err
 }
 
 #ifdef IPLUG_RCCPP
+
 void IPlugAPPHost::CleanupRCCPP()
 {
   if(mRCCPTimer)
