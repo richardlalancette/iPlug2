@@ -7,7 +7,7 @@
 
 struct IUpdateable : public IObject
 {
-  virtual void OnCompile() = 0;
+  virtual void OnCompile(void* pPlug) = 0;
   virtual void Update(float deltaTime) = 0;
 };
 

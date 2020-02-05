@@ -896,12 +896,12 @@ bool IPlugAPPHost::InitRCCPP()
   mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\IPlug\\Extras");
   mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\IPlug\\Extras\\RCCPP");
   mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\WDL");
-  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\Examples\\IPlugEffect");
+  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\Examples\\IPlugEffect");
   mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\Dependencies\\IGraphics\\NanoSVG\\src");
   mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\Dependencies\\IGraphics\\NanoVG\\src");
   mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\Dependencies\\IGraphics\\glad_GL2\\include");
   mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\Dependencies\\Build\\src\\rccpp\\Aurora");
-  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIGRAPHICS_NANOVG -DIGRAPHICS_GL2 -DAPP_API -DNOMINMAX -std=c++14");
+  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIGRAPHICS_NANOVG -DIGRAPHICS_GL2 -DAPP_API -DNOMINMAX"); //-std=c++14
 #endif
   // construct first object
   IObjectConstructor* pCtor = mRuntimeObjectSystem->GetObjectFactorySystem()->GetConstructor("RuntimeObject01");
@@ -933,7 +933,7 @@ void IPlugAPPHost::OnRCCPPTimerTick(Timer& t)
   {
     // load module when compile complete
     mRuntimeObjectSystem->LoadCompiledModule();
-    mUpdateable->OnCompile();
+    mUpdateable->OnCompile((void*) mIPlug.get());
   }
 
   if(!mRuntimeObjectSystem->GetIsCompiling())
