@@ -867,41 +867,33 @@ bool IPlugAPPHost::InitRCCPP()
   }
   
   mRuntimeObjectSystem->GetObjectFactorySystem()->AddListener(this);
-
-//  FileSystemUtils::Path basePath = mRuntimeObjectSystem->FindFile( __FILE__ );
-//  FileSystemUtils::Path includeDir = basePath.ParentPath() / "Include";
+  //C:\Projects\iPlug2\iPlug2\IPlug\IPlug_include_in_plug_src.h
+  FileSystemUtils::Path basePath = mRuntimeObjectSystem->FindFile( __FILE__ );
+  FileSystemUtils::Path iPlugDir = basePath.ParentPath().ParentPath().ParentPath();
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IPlug").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IGraphics").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IGraphics"/"Platforms").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IGraphics"/"Controls").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IGraphics"/"Drawing").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IPlug").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IPlug"/"APP").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IPlug"/"Extras").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IPlug"/"Extras"/"RCCPP").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"WDL").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Examples"/"IPlugEffect").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IPlug"/"RTAudio").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IPlug"/"RTMidi").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"STB").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"NanoSVG"/"src").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"NanoVG"/"src").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"Build"/"src"/"rccpp"/"Aurora").c_str());
 #ifdef OS_MAC
-  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IGraphics");
-  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IGraphics/Platforms");
-  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IGraphics/Controls");
-  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IGraphics/Drawing");
-  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IPlug");
-  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IPlug/APP");
-  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IPlug/Extras");
-  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/IPlug/Extras/RCCPP");
-  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/WDL");
-  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/Examples/IPlugEffect");
-  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/Dependencies/IGraphics/NanoSVG/src");
-  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/Dependencies/IGraphics/NanoVG/src");
-  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/Dependencies/IGraphics/MetalNanoVG/src");
-  mRuntimeObjectSystem->AddIncludeDir("/Users/oli/Dev/iPlug2/Dependencies/Build/src/RuntimeCompiledCPlusPlus/Aurora");
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"MetalNanoVG"/"src").c_str());
   mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIGRAPHICS_NANOVG -DIGRAPHICS_METAL -DAPP_API -std=c++14");
 #elif defined OS_WIN
-  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\IGraphics");
-  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\IGraphics\\Platforms");
-  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\IGraphics\\Controls");
-  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\IGraphics\\Drawing");
-  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\IPlug");
-  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\IPlug\\APP");
-  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\IPlug\\Extras");
-  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\IPlug\\Extras\\RCCPP");
-  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\WDL");
-  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\Examples\\IPlugEffect");
-  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\Dependencies\\IGraphics\\NanoSVG\\src");
-  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\Dependencies\\IGraphics\\NanoVG\\src");
-  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\Dependencies\\IGraphics\\glad_GL2\\include");
-  mRuntimeObjectSystem->AddIncludeDir("C:\\Users\\oli\\Dev\\iPlug2\\Dependencies\\Build\\src\\rccpp\\Aurora");
-  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIGRAPHICS_NANOVG -DIGRAPHICS_GL2 -DAPP_API -DNOMINMAX"); //-std=c++14
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"glad_GL2"/"include").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"glad_GL2"/"src").c_str());
+  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIGRAPHICS_NANOVG -DIGRAPHICS_GL2 -DAPP_API -DNOMINMAX /wd4068"); //-std=c++14
 #endif
   // construct first object
   IObjectConstructor* pCtor = mRuntimeObjectSystem->GetObjectFactorySystem()->GetConstructor("RuntimeObject01");
