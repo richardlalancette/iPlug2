@@ -37,7 +37,7 @@ protected:
     // Make sure there's a limit to the amount of rubbish we can output
     mBuff[LOGSYSTEM_MAX_BUFFER-1] = '\0';
 
-    DBGMSG("RTCPP: %s\n", mBuff);
+    DBGMSG("%s\n", mBuff);
   }
 
   char mBuff[LOGSYSTEM_MAX_BUFFER];
