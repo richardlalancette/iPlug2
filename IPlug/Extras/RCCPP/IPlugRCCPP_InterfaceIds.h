@@ -13,6 +13,16 @@ enum InterfaceIDEnumIPlug
   IID_ENDInterfaceIDEnumIPlug
 };
 
+namespace iplug
+{
+  class IPlugAPP;
+}
+
+struct SystemTable
+{
+  iplug::IPlugAPP* pPlug;
+  void* pAppHost; // for InstanceInfo
+};
 
 #endif //INTERFACEIDS_INCLUDED
 

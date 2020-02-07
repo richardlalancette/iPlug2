@@ -48,7 +48,9 @@ std::unique_ptr<IPlugAPPHost> IPlugAPPHost::sInstance;
 UINT gSCROLLMSG;
 
 IPlugAPPHost::IPlugAPPHost()
+#ifndef IPLUG_RCCPP
 : mIPlug(MakePlug(InstanceInfo{this}))
+#endif
 {
 }
 
@@ -78,6 +80,9 @@ IPlugAPPHost* IPlugAPPHost::Create()
 
 bool IPlugAPPHost::Init()
 {
+#ifdef IPLUG_RCCPP
+  InitRCCPP();
+#endif
   mIPlug->SetHost("standalone", mIPlug->GetPluginVersion(false));
     
   if (!InitState())
@@ -89,13 +94,13 @@ bool IPlugAPPHost::Init()
   ProbeMidiIO(); // find out what midi IO devs are available and put their names in the global variables gMidiInputDevs / gMidiOutputDevs
   SelectMIDIDevice(ERoute::kInput, mState.mMidiInDev.Get());
   SelectMIDIDevice(ERoute::kOutput, mState.mMidiOutDev.Get());
-  
+
+    
+
+
   mIPlug->OnParamReset(kReset);
   mIPlug->OnActivate(true);
-  
-#ifdef IPLUG_RCCPP
-  InitRCCPP();
-#endif
+
   
   return true;
 }
@@ -859,8 +864,10 @@ bool IPlugAPPHost::InitRCCPP()
 {
   mRuntimeObjectSystem = new RuntimeObjectSystem;
   mCompilerLogger = new StdioLogSystem();
+  mSystemtable = new SystemTable;
+  mSystemtable->pAppHost = this;
   
-  if(!mRuntimeObjectSystem->Initialise(mCompilerLogger, 0))
+  if(!mRuntimeObjectSystem->Initialise(mCompilerLogger, mSystemtable))
   {
     mRuntimeObjectSystem = 0;
     return false;
@@ -889,12 +896,16 @@ bool IPlugAPPHost::InitRCCPP()
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"Build"/"src"/"rccpp"/"Aurora").c_str());
 #ifdef OS_MAC
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"MetalNanoVG"/"src").c_str());
-  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIGRAPHICS_NANOVG -DIGRAPHICS_METAL -DAPP_API -std=c++14");
+  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIPLUG_RCCPP -DIPLUG_EDITOR -DIPLUG_DSP -DIGRAPHICS_NANOVG -DIGRAPHICS_METAL -DAPP_API -std=c++14");
 #elif defined OS_WIN
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"glad_GL2"/"include").c_str());
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"glad_GL2"/"src").c_str());
-  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIGRAPHICS_NANOVG -DIGRAPHICS_GL2 -DAPP_API -DNOMINMAX /wd4068"); //-std=c++14
+  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIPLUG_RCCPP -DIPLUG_EDITOR -DIPLUG_DSP -DIGRAPHICS_NANOVG -DIGRAPHICS_GL2 -DAPP_API -DNOMINMAX /wd4068"); //-std=c++14
 #endif
+
+  mIPlug = mSystemtable->pPlug;
+
+  /*
   // construct first object
   IObjectConstructor* pCtor = mRuntimeObjectSystem->GetObjectFactorySystem()->GetConstructor("RuntimeObject01");
   
@@ -912,6 +923,7 @@ bool IPlugAPPHost::InitRCCPP()
     
     mObjectId = pObj->GetObjectId();
   }
+  //*/
 
   mRCCPTimer = std::unique_ptr<Timer>(Timer::Create(std::bind(&IPlugAPPHost::OnRCCPPTimerTick, this, std::placeholders::_1), RCCPP_TIMER_RATE));
   
@@ -925,14 +937,13 @@ void IPlugAPPHost::OnRCCPPTimerTick(Timer& t)
   {
     // load module when compile complete
     mRuntimeObjectSystem->LoadCompiledModule();
-    mUpdateable->OnCompile((void*) mIPlug.get());
+    mIPlug = mSystemtable->pPlug;
   }
 
   if(!mRuntimeObjectSystem->GetIsCompiling())
   {
     const float deltaTime = 1.0f;
     mRuntimeObjectSystem->GetFileChangeNotifier()->Update(deltaTime);
-    mUpdateable->Update( deltaTime );
   }
 }
 #endif

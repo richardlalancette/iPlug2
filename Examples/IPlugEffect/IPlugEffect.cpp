@@ -2,9 +2,8 @@
 #include "IPlug_include_in_plug_src.h"
 #include "IControls.h"
 
+#if IPLUG_RCCPP
 #include "RuntimeObjectSystem/ObjectInterfacePerModule.h"
-#include "RuntimeObjectSystem/IObject.h"
-#include "IPlugRCCPP_InterfaceIds.h"
 
 RUNTIME_COMPILER_SOURCEDEPENDENCY_FILE( "../../IPlug/IPlugParameter", ".cpp" );
 RUNTIME_COMPILER_SOURCEDEPENDENCY_FILE( "../../IPlug/IPlugAPIBase", ".cpp" );
@@ -42,11 +41,37 @@ RUNTIME_COMPILER_SOURCEDEPENDENCY_FILE( "../../IGraphics/Platforms/IGraphicsWin"
     RUNTIME_COMPILER_LINKLIBRARY( "-lOpenGL32");
 #endif
 
-class IPlugEffectRCCpp : public TInterface<IID_IPLUGEFFECT, IObject>
-{
-};
-REGISTERCLASS(IPlugEffectRCCpp);
+REGISTERSINGLETON(IPlugEffect,true); // when using RCC++ construct IPlugEffect when RCC++ initialized
+#endif
 
+
+#if IPLUG_RCCPP
+IPlugEffect::IPlugEffect() : IPlugEffect(InstanceInfo{PerModuleInterface::g_pSystemTable->pAppHost})
+{
+}
+
+void IPlugEffect::Init( bool isFirstInit )
+{
+  if(!isFirstInit)
+  {
+    IGraphics* pOldGraphics = PerModuleInterface::g_pSystemTable->pPlug->GetUI();
+    void* window = pOldGraphics->GetWindow();
+    //pOldGraphics->CloseWindow();
+    
+    SetHost("standalone", GetPluginVersion(false));
+    OnParamReset(kReset);
+    OnActivate(true);
+
+    OpenWindow(window);
+    IGraphics* pGraphics = GetUI();
+    IPanelControl* pBGControl = dynamic_cast<IPanelControl*>(pGraphics->GetBackgroundControl());
+    
+    pBGControl->SetPattern(COLOR_RED);
+  }
+  PerModuleInterface::g_pSystemTable->pPlug = this;
+
+}
+#endif
 
 IPlugEffect::IPlugEffect(const InstanceInfo& info)
 : Plugin(info, MakeConfig(kNumParams, kNumPrograms))
@@ -63,7 +88,7 @@ IPlugEffect::IPlugEffect(const InstanceInfo& info)
     pGraphics->AttachPanelBackground(COLOR_GRAY);
     pGraphics->LoadFont("Roboto-Regular", ROBOTO_FN);
     const IRECT b = pGraphics->GetBounds();
-    pGraphics->AttachControl(new ITextControl(b.GetMidVPadded(50), "Hello iPlug 2!", IText(50)));
+    pGraphics->AttachControl(new ITextControl(b.GetMidVPadded(50), "Hello iPlug 2! RCC++", IText(50)));
     pGraphics->AttachControl(new IVKnobControl(b.GetCentredInside(100).GetVShifted(-100), kGain));
   };
 #endif
