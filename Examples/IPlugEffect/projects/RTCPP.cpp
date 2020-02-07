@@ -19,13 +19,15 @@ public:
     IGraphics* pGraphics = pIPlug->GetUI();
 
     IPanelControl* pBGControl = dynamic_cast<IPanelControl*>(pGraphics->GetBackgroundControl());
-
-    pBGControl->SetPattern(IColor::GetRandomColor());
+    
+    //pBGControl->SetPattern(IColor::GetRandomColor());
+    //pBGControl->SetPattern(COLOR_YELLOW);
+    pBGControl->SetPattern(COLOR_RED);
   }
 
   void Update(float deltaTime) override
   {
-    DBGMSG("update called\n");
+    //DBGMSG("update called\n");
      
   }
 };
