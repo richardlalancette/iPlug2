@@ -937,6 +937,10 @@ void IPlugAPPHost::OnRCCPPTimerTick(Timer& t)
   {
     // load module when compile complete
     mRuntimeObjectSystem->LoadCompiledModule();
+#ifdef OS_WIN
+    mRuntimeObjectSystem->CleanObjectFiles(); // clean temp object files - temp fix for RCC++ issue with newer VS, fix in progress
+#endif
+
     mIPlug = mSystemtable->pPlug;
   }
 
