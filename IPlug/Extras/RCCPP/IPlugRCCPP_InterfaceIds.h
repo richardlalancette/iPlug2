@@ -8,6 +8,7 @@
 enum InterfaceIDEnumIPlug
 {
   IID_IUPDATEABLE = IID_ENDInterfaceID,
+  IID_IPLUGEFFECT,
 
   IID_ENDInterfaceIDEnumIPlug
 };
