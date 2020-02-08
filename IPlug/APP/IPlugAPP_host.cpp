@@ -48,9 +48,7 @@ std::unique_ptr<IPlugAPPHost> IPlugAPPHost::sInstance;
 UINT gSCROLLMSG;
 
 IPlugAPPHost::IPlugAPPHost()
-#ifndef IPLUG_RCCPP
 : mIPlug(MakePlug(InstanceInfo{this}))
-#endif
 {
 }
 
@@ -900,10 +898,10 @@ bool IPlugAPPHost::InitRCCPP()
 #elif defined OS_WIN
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"glad_GL2"/"include").c_str());
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"glad_GL2"/"src").c_str());
-  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIPLUG_RCCPP -DIPLUG_EDITOR -DIPLUG_DSP -DIGRAPHICS_NANOVG -DIGRAPHICS_GL2 -DAPP_API -DNOMINMAX /wd4068"); //-std=c++14
+  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIPLUG_RCCPP -DIPLUG_EDITOR -DIPLUG_DSP -DIGRAPHICS_NANOVG -DIGRAPHICS_GL2 -DAPP_API -DNOMINMAX /wd4068 /std:c++14"); //-std=c++14
 #endif
 
-  mIPlug = mSystemtable->pPlug;
+  mSystemtable->pPlug = mIPlug;
 
   /*
   // construct first object
@@ -940,8 +938,14 @@ void IPlugAPPHost::OnRCCPPTimerTick(Timer& t)
 #ifdef OS_WIN
     mRuntimeObjectSystem->CleanObjectFiles(); // clean temp object files - temp fix for RCC++ issue with newer VS, fix in progress
 #endif
-
-    mIPlug = mSystemtable->pPlug;
+    IObjectConstructor* pCtor = mRuntimeObjectSystem->GetObjectFactorySystem()->GetConstructor("IPlugEffect");
+  
+    if(pCtor)
+    {
+      IObject* pObj = pCtor->Construct();
+      pObj->Init(false);
+      mIPlug = mSystemtable->pPlug;
+    }
   }
 
   if(!mRuntimeObjectSystem->GetIsCompiling())

@@ -41,7 +41,7 @@ RUNTIME_COMPILER_SOURCEDEPENDENCY_FILE( "../../IGraphics/Platforms/IGraphicsWin"
     RUNTIME_COMPILER_LINKLIBRARY( "-lOpenGL32");
 #endif
 
-REGISTERSINGLETON(IPlugEffect,true); // when using RCC++ construct IPlugEffect when RCC++ initialized
+REGISTERSINGLETON(IPlugEffect,false); // when using RCC++ construct IPlugEffect when RCC++ initialized
 #endif
 
 
@@ -58,10 +58,6 @@ void IPlugEffect::Init( bool isFirstInit )
     void* window = pOldGraphics->GetWindow();
     //pOldGraphics->CloseWindow();
     
-    SetHost("standalone", GetPluginVersion(false));
-    OnParamReset(kReset);
-    OnActivate(true);
-
     OpenWindow(window);
     IGraphics* pGraphics = GetUI();
     IPanelControl* pBGControl = dynamic_cast<IPanelControl*>(pGraphics->GetBackgroundControl());
