@@ -5,14 +5,6 @@
 
 #include "RuntimeObjectSystem/IObject.h"
 
-enum InterfaceIDEnumIPlug
-{
-  IID_IUPDATEABLE = IID_ENDInterfaceID,
-  IID_IPLUGEFFECT,
-
-  IID_ENDInterfaceIDEnumIPlug
-};
-
 namespace iplug
 {
   class IPlugAPP;
@@ -21,6 +13,7 @@ namespace iplug
 struct SystemTable
 {
   iplug::IPlugAPP* pPlug;
+  void* pParentWindow;
   void* pAppHost; // for InstanceInfo
 };
 

@@ -307,6 +307,9 @@
     <ClInclude Include="..\..\..\IGraphics\Platforms\IGraphicsWin.h" />
     <ClInclude Include="..\..\..\IPlug\APP\IPlugAPP.h" />
     <ClInclude Include="..\..\..\IPlug\APP\IPlugAPP_host.h" />
+    <ClInclude Include="..\..\..\IPlug\Extras\RCCPP\IPlugRCCPP_inc.h" />
+    <ClInclude Include="..\..\..\IPlug\Extras\RCCPP\IPlugRCCPP_LogSystem.h" />
+    <ClInclude Include="..\..\..\IPlug\Extras\RCCPP\IPlugRCCPP_SystemTable.h" />
     <ClInclude Include="..\..\..\IPlug\IPlugAPIBase.h" />
     <ClInclude Include="..\..\..\IPlug\IPlugConstants.h" />
     <ClInclude Include="..\..\..\IPlug\IPlugEditorDelegate.h" />
@@ -406,7 +409,6 @@
     <ClCompile Include="..\..\..\IPlug\IPlugProcessor.cpp" />
     <ClCompile Include="..\..\..\IPlug\IPlugTimer.cpp" />
     <ClCompile Include="..\IPlugEffect.cpp" />
-    <ClCompile Include="RTCPP.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\resources\main.rc" />

@@ -39,8 +39,7 @@ using namespace iplug;
 #include "RuntimeObjectSystem/RuntimeObjectSystem.h"
 #include "RuntimeObjectSystem/ObjectInterfacePerModule.h"
 #include "RuntimeObjectSystem/IObject.h"
-#include "IPlugRCCPP_IUpdateable.h"
-#include "IPlugRCCPP_InterfaceIds.h"
+#include "IPlugRCCPP_SystemTable.h"
 #include "IPlugRCCPP_LogSystem.h"
 #endif
 
@@ -105,6 +104,9 @@ bool IPlugAPPHost::Init()
 
 bool IPlugAPPHost::OpenWindow(HWND pParent)
 {
+#ifdef IPLUG_RCCPP
+  mSystemtable->pParentWindow = (void*) pParent;
+#endif
   return mIPlug->OpenWindow(pParent) != nullptr;
 }
 
@@ -848,7 +850,6 @@ void IPlugAPPHost::OnConstructorsAdded()
   if(mUpdateable)
   {
     IObject* pObj = mRuntimeObjectSystem->GetObjectFactorySystem()->GetTheObject(mObjectId);
-    pObj->GetInterface(&mUpdateable);
     
     if(mUpdateable == nullptr)
     {
@@ -872,7 +873,7 @@ bool IPlugAPPHost::InitRCCPP()
   }
   
   mRuntimeObjectSystem->GetObjectFactorySystem()->AddListener(this);
-  //C:\Projects\iPlug2\iPlug2\IPlug\IPlug_include_in_plug_src.h
+
   FileSystemUtils::Path basePath = mRuntimeObjectSystem->FindFile( __FILE__ );
   FileSystemUtils::Path iPlugDir = basePath.ParentPath().ParentPath().ParentPath();
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IPlug").c_str());
@@ -902,26 +903,6 @@ bool IPlugAPPHost::InitRCCPP()
 #endif
 
   mSystemtable->pPlug = mIPlug;
-
-  /*
-  // construct first object
-  IObjectConstructor* pCtor = mRuntimeObjectSystem->GetObjectFactorySystem()->GetConstructor("RuntimeObject01");
-  
-  if(pCtor)
-  {
-    IObject* pObj = pCtor->Construct();
-    pObj->GetInterface(&mUpdateable);
-    
-    if(mUpdateable == nullptr)
-    {
-      delete pObj;
-      mCompilerLogger->LogError("Error - no updateable interface found\n");
-      return false;
-    }
-    
-    mObjectId = pObj->GetObjectId();
-  }
-  //*/
 
   mRCCPTimer = std::unique_ptr<Timer>(Timer::Create(std::bind(&IPlugAPPHost::OnRCCPPTimerTick, this, std::placeholders::_1), RCCPP_TIMER_RATE));
   

@@ -92,7 +92,6 @@
     <ClCompile Include="..\..\..\IGraphics\Drawing\IGraphicsSkia.cpp">
       <Filter>IGraphics\Drawing</Filter>
     </ClCompile>
-    <ClCompile Include="RTCPP.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\IPlugEffect.h" />
@@ -289,6 +288,15 @@
     <ClInclude Include="..\..\..\IPlug\IPlugPluginBase.h">
       <Filter>IPlug</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\IPlug\Extras\RCCPP\IPlugRCCPP_SystemTable.h">
+      <Filter>IPlug\Extras\RCCPP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\IPlug\Extras\RCCPP\IPlugRCCPP_inc.h">
+      <Filter>IPlug\Extras\RCCPP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\IPlug\Extras\RCCPP\IPlugRCCPP_LogSystem.h">
+      <Filter>IPlug\Extras\RCCPP</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="resources">
@@ -320,6 +328,12 @@
     </Filter>
     <Filter Include="IPlug\APP\RTAudioMidi\include">
       <UniqueIdentifier>{649c5de3-b4c2-4de9-8d57-3b1762646259}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IPlug\Extras">
+      <UniqueIdentifier>{0923741a-3350-4c94-9962-a98bf77a3143}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IPlug\Extras\RCCPP">
+      <UniqueIdentifier>{c304489a-9830-4c95-bd12-4bb9a6b4c52e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
