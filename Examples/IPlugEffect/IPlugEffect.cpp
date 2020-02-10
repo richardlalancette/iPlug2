@@ -4,7 +4,7 @@
 
 #include "IPlugRCCPP_inc.h"
 
-ENABLE_RCCP
+ENABLE_RCCPP
 
 IPlugEffect::IPlugEffect(const InstanceInfo& info)
 : Plugin(info, MakeConfig(kNumParams, kNumPrograms))
