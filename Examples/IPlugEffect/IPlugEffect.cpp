@@ -3,7 +3,10 @@
 #include "IControls.h"
 
 #if IPLUG_RCCPP
+// most of the code below, with the exception of the REGISTER*() macro, can be in a header
 #include "RuntimeObjectSystem/ObjectInterfacePerModule.h"
+#include "IPlugRCCPP_InterfaceIds.h"
+#include "RuntimeObjectSystem/IObject.h"
 
 RUNTIME_COMPILER_SOURCEDEPENDENCY_FILE( "../../IPlug/IPlugParameter", ".cpp" );
 RUNTIME_COMPILER_SOURCEDEPENDENCY_FILE( "../../IPlug/IPlugAPIBase", ".cpp" );
@@ -41,33 +44,35 @@ RUNTIME_COMPILER_SOURCEDEPENDENCY_FILE( "../../IGraphics/Platforms/IGraphicsWin"
     RUNTIME_COMPILER_LINKLIBRARY( "-lOpenGL32");
 #endif
 
-REGISTERSINGLETON(IPlugEffect,false); // when using RCC++ construct IPlugEffect when RCC++ initialized
-#endif
-
-
-#if IPLUG_RCCPP
-IPlugEffect::IPlugEffect() : IPlugEffect(InstanceInfo{PerModuleInterface::g_pSystemTable->pAppHost})
+// the following class can be placed in a header but no code can be placed in a source
+// file other than the one with the REGISTERSINGLETON
+struct IPlugEffectRCCppConstructor : IObject
 {
-}
-
-void IPlugEffect::Init( bool isFirstInit )
-{
-  if(!isFirstInit)
+  IPlugEffectRCCppConstructor()
   {
-    IGraphics* pOldGraphics = PerModuleInterface::g_pSystemTable->pPlug->GetUI();
-    void* window = pOldGraphics->GetWindow();
-    //pOldGraphics->CloseWindow();
-    
-    OpenWindow(window);
-    IGraphics* pGraphics = GetUI();
-    IPanelControl* pBGControl = dynamic_cast<IPanelControl*>(pGraphics->GetBackgroundControl());
-    
-    pBGControl->SetPattern(COLOR_RED);
   }
-  PerModuleInterface::g_pSystemTable->pPlug = this;
 
-}
+  void Init( bool isFirstInit ) override
+  {
+    if(!isFirstInit)
+    {
+      IGraphics* pOldGraphics = PerModuleInterface::g_pSystemTable->pPlug->GetUI();
+      void* window = pOldGraphics->GetWindow();
+
+      PerModuleInterface::g_pSystemTable->pPlug =
+            new IPlugEffect(InstanceInfo{PerModuleInterface::g_pSystemTable->pAppHost});
+
+      PerModuleInterface::g_pSystemTable->pPlug->OpenWindow(window);
+      IGraphics* pGraphics = PerModuleInterface::g_pSystemTable->pPlug->GetUI();
+      IPanelControl* pBGControl = dynamic_cast<IPanelControl*>(pGraphics->GetBackgroundControl());    
+    }
+  }
+};
+
+// The following macro needs to be in the file to be recompiled.
+REGISTERSINGLETON(IPlugEffectRCCppConstructor,true);
 #endif
+
 
 IPlugEffect::IPlugEffect(const InstanceInfo& info)
 : Plugin(info, MakeConfig(kNumParams, kNumPrograms))
@@ -84,7 +89,7 @@ IPlugEffect::IPlugEffect(const InstanceInfo& info)
     pGraphics->AttachPanelBackground(COLOR_GRAY);
     pGraphics->LoadFont("Roboto-Regular", ROBOTO_FN);
     const IRECT b = pGraphics->GetBounds();
-    pGraphics->AttachControl(new ITextControl(b.GetMidVPadded(50), "Hello iPlug 2! RCC++", IText(50)));
+    pGraphics->AttachControl(new ITextControl(b.GetMidVPadded(50), "Hello iPlug 2! RCC++ 4", IText(50)));
     pGraphics->AttachControl(new IVKnobControl(b.GetCentredInside(100).GetVShifted(-100), kGain));
   };
 #endif

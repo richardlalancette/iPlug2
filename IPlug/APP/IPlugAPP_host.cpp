@@ -938,14 +938,7 @@ void IPlugAPPHost::OnRCCPPTimerTick(Timer& t)
 #ifdef OS_WIN
     mRuntimeObjectSystem->CleanObjectFiles(); // clean temp object files - temp fix for RCC++ issue with newer VS, fix in progress
 #endif
-    IObjectConstructor* pCtor = mRuntimeObjectSystem->GetObjectFactorySystem()->GetConstructor("IPlugEffect");
-  
-    if(pCtor)
-    {
-      IObject* pObj = pCtor->Construct();
-      pObj->Init(false);
       mIPlug = mSystemtable->pPlug;
-    }
   }
 
   if(!mRuntimeObjectSystem->GetIsCompiling())
