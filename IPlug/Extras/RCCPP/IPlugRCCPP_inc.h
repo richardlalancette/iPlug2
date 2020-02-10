@@ -1,5 +1,6 @@
 #ifdef IPLUG_RCCPP
-// most of the code below, with the exception of the REGISTER*() macro, can be in a header
+#include "config.h"
+
 #include "RuntimeObjectSystem/ObjectInterfacePerModule.h"
 #include "IPlugRCCPP_SystemTable.h"
 #include "RuntimeObjectSystem/IObject.h"
@@ -47,7 +48,7 @@ struct IPLUGRCCPP : IObject
     if (!isFirstInit)
     {
       PerModuleInterface::g_pSystemTable->pPlug->CloseWindow();
-      PerModuleInterface::g_pSystemTable->pPlug = new IPlugEffect(InstanceInfo{ PerModuleInterface::g_pSystemTable->pAppHost });
+      PerModuleInterface::g_pSystemTable->pPlug = new PLUG_CLASS_NAME(InstanceInfo{ PerModuleInterface::g_pSystemTable->pAppHost });
       PerModuleInterface::g_pSystemTable->pPlug->OpenWindow(PerModuleInterface::g_pSystemTable->pParentWindow);
     }
   }
