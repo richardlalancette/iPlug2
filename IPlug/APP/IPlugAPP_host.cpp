@@ -895,13 +895,14 @@ bool IPlugAPPHost::InitRCCPP()
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"Build"/"src"/"rccpp"/"Aurora").c_str());
 #ifdef OS_MAC
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"MetalNanoVG"/"src").c_str());
-  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIPLUG_RCCPP -DIPLUG_EDITOR -DIPLUG_DSP -DIGRAPHICS_NANOVG -DIGRAPHICS_METAL -DAPP_API -std=c++14");
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"WDL"/"swell").c_str());
+  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIPLUG_RCCPP -DIPLUG_EDITOR -DIPLUG_DSP -DIGRAPHICS_NANOVG -DIGRAPHICS_METAL -DAPP_API -std=c++14 -Wno-deprecated-declarations");
 #elif defined OS_WIN
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"glad_GL2"/"include").c_str());
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"glad_GL2"/"src").c_str());
-  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIPLUG_RCCPP -DIPLUG_EDITOR -DIPLUG_DSP -DIGRAPHICS_NANOVG -DIGRAPHICS_GL2 -DAPP_API -DNOMINMAX /wd4068 /std:c++14"); //-std=c++14
+  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIPLUG_RCCPP -DIPLUG_EDITOR -DIPLUG_DSP -DIGRAPHICS_NANOVG -DIGRAPHICS_GL2 -DAPP_API -DNOMINMAX /wd4068 /std:c++14");
 #endif
-
+  
   mSystemtable->pPlug = mIPlug;
 
   mRCCPTimer = std::unique_ptr<Timer>(Timer::Create(std::bind(&IPlugAPPHost::OnRCCPPTimerTick, this, std::placeholders::_1), RCCPP_TIMER_RATE));
