@@ -919,7 +919,7 @@ void IPlugAPPHost::OnRCCPPTimerTick(Timer& t)
 #ifdef OS_WIN
     mRuntimeObjectSystem->CleanObjectFiles(); // clean temp object files - temp fix for RCC++ issue with newer VS, fix in progress
 #endif
-      mIPlug = mSystemtable->pPlug;
+      mIPlug = reinterpret_cast<IPlugAPP*>(mSystemtable->pPlug);
   }
 
   if(!mRuntimeObjectSystem->GetIsCompiling())

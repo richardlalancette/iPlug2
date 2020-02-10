@@ -25,7 +25,8 @@ RUNTIME_COMPILER_SOURCEDEPENDENCY_FILE( "../../IGraphics/Platforms/IGraphicsWin"
 #endif
 
 #include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
-#ifdef _WIN32
+
+#ifdef OS_WIN
     RUNTIME_COMPILER_LINKLIBRARY( "Gdi32.lib");
     RUNTIME_COMPILER_LINKLIBRARY( "opengl32.lib");
     RUNTIME_COMPILER_LINKLIBRARY( "User32.lib");
@@ -35,9 +36,9 @@ RUNTIME_COMPILER_SOURCEDEPENDENCY_FILE( "../../IGraphics/Platforms/IGraphicsWin"
     RUNTIME_COMPILER_LINKLIBRARY( "Ole32.lib" );
     RUNTIME_COMPILER_LINKLIBRARY( "Comctl32.lib" );
     RUNTIME_COMPILER_LINKLIBRARY( "Wininet.lib" );
-#elif __APPLE__
+#elif OS_MAC
     RUNTIME_COMPILER_LINKLIBRARY( "-framework OpenGL");
-#elif __linux
+#elif OS_LINUX
     RUNTIME_COMPILER_LINKLIBRARY( "-lOpenGL32");
 #endif
 
@@ -47,9 +48,10 @@ struct IPLUGRCCPP : IObject
   {
     if (!isFirstInit)
     {
-      PerModuleInterface::g_pSystemTable->pPlug->CloseWindow();
-      PerModuleInterface::g_pSystemTable->pPlug = new PLUG_CLASS_NAME(InstanceInfo{ PerModuleInterface::g_pSystemTable->pAppHost });
-      PerModuleInterface::g_pSystemTable->pPlug->OpenWindow(PerModuleInterface::g_pSystemTable->pParentWindow);
+      IPlugAPP* pPlug = reinterpret_cast<IPlugAPP*>(PerModuleInterface::g_pSystemTable->pPlug);
+      pPlug->CloseWindow();
+      pPlug = new PLUG_CLASS_NAME(InstanceInfo{ PerModuleInterface::g_pSystemTable->pAppHost });
+      pPlug->OpenWindow(PerModuleInterface::g_pSystemTable->pParentWindow);
     }
   }
 };
