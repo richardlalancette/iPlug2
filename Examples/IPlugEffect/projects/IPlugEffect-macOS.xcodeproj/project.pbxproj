@@ -711,6 +711,9 @@
 		4F9A82F3213DE80200BE63A4 /* IPopupMenuControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IPopupMenuControl.h; sourceTree = "<group>"; };
 		4F9A82F5213DE80300BE63A4 /* IPopupMenuControl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IPopupMenuControl.cpp; sourceTree = "<group>"; };
 		4F9C097E224D26B40050309D /* IPlugVST3_ControllerBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = IPlugVST3_ControllerBase.h; path = ../../../IPlug/VST3/IPlugVST3_ControllerBase.h; sourceTree = "<group>"; };
+		4FA44B3623F2E92D00072788 /* IPlugRCCPP_SystemTable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IPlugRCCPP_SystemTable.h; sourceTree = "<group>"; };
+		4FA44B3723F2E92D00072788 /* IPlugRCCPP_inc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IPlugRCCPP_inc.h; sourceTree = "<group>"; };
+		4FA44B3823F2E92D00072788 /* IPlugRCCPP_LogSystem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IPlugRCCPP_LogSystem.h; sourceTree = "<group>"; };
 		4FA61F9922E8A96300A92C58 /* tex */ = {isa = PBXFileReference; lastKnownFileType = folder; name = tex; path = ../resources/tex; sourceTree = "<group>"; };
 		4FA9F80321F760C1004E6FE2 /* IGraphicsLice_src.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = IGraphicsLice_src.mm; sourceTree = "<group>"; };
 		4FA9F80C21F76177004E6FE2 /* IGraphicsAGG_src.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = IGraphicsAGG_src.mm; sourceTree = "<group>"; };
@@ -1118,6 +1121,7 @@
 		4F5369B820C446430089212E /* Extras */ = {
 			isa = PBXGroup;
 			children = (
+				4FA44B3523F2E92D00072788 /* RCCPP */,
 				4F6E673C21C5614C005991A9 /* Synth */,
 				4FC44B9820F151B90062F870 /* WebSocket */,
 				4F5369BC20C446430089212E /* Easing.h */,
@@ -1560,6 +1564,16 @@
 				4F815916205D50EB00393585 /* vsttypes.h */,
 			);
 			path = vst;
+			sourceTree = "<group>";
+		};
+		4FA44B3523F2E92D00072788 /* RCCPP */ = {
+			isa = PBXGroup;
+			children = (
+				4FA44B3623F2E92D00072788 /* IPlugRCCPP_SystemTable.h */,
+				4FA44B3723F2E92D00072788 /* IPlugRCCPP_inc.h */,
+				4FA44B3823F2E92D00072788 /* IPlugRCCPP_LogSystem.h */,
+			);
+			path = RCCPP;
 			sourceTree = "<group>";
 		};
 		4FB1F57A20E4AFDA004157C8 /* Platforms */ = {

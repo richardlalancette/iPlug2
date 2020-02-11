@@ -41,7 +41,7 @@ bool IPlugAPP::EditorResize(int viewWidth, int viewHeight)
     
   if (viewWidth != GetEditorWidth() || viewHeight != GetEditorHeight())
   {
-    #ifdef OS_MAC
+    #if defined OS_MAC && !defined IPLUG_RCCPP
     #define TITLEBAR_BODGE 22 //TODO: sort this out
     RECT r;
     GetWindowRect(gHWND, &r);

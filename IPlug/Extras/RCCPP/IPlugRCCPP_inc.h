@@ -50,7 +50,7 @@ RUNTIME_COMPILER_SOURCEDEPENDENCY_FILE("../../IPlug/IPlugTimer", ".cpp");
 #elif defined OS_MAC
   RUNTIME_COMPILER_LINKLIBRARY("-framework Cocoa -framework Carbon -framework CoreFoundation -framework CoreData -framework Foundation -framework CoreServices -framework Metal -framework MetalKit -framework QuartzCore -framework WebKit -framework OpenGL");
   #if defined IGRAPHICS_SKIA
-  RUNTIME_COMPILER_LINKLIBRARY("libskia.a");
+  RUNTIME_COMPILER_LINKLIBRARY("-lskia");
   #endif
 #elif defined OS_LINUX
   #error "Not yet implemented"

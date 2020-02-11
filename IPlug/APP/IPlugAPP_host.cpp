@@ -874,7 +874,10 @@ bool IPlugAPPHost::InitRCCPP()
   
   mRuntimeObjectSystem->GetObjectFactorySystem()->AddListener(this);
 
-  FileSystemUtils::Path basePath = mRuntimeObjectSystem->FindFile( __FILE__ );
+  FileSystemUtils::Path basePath = mRuntimeObjectSystem->FindFile(__FILE__);
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(basePath).c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path("/Users/oli/Dev/iPlug2/Examples/IPlugEffect").c_str());
+  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path("/Users/oli/Dev/iPlug2/Examples/IPlugEffect/resources").c_str());
   FileSystemUtils::Path iPlugDir = basePath.ParentPath().ParentPath().ParentPath();
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IPlug").c_str());
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IGraphics").c_str());
@@ -886,7 +889,6 @@ bool IPlugAPPHost::InitRCCPP()
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IPlug"/"Extras").c_str());
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IPlug"/"Extras"/"RCCPP").c_str());
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"WDL").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Examples"/"IPlugEffect").c_str());
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IPlug"/"RTAudio").c_str());
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IPlug"/"RTMidi").c_str());
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"STB").c_str());
