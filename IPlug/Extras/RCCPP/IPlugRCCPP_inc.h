@@ -74,6 +74,46 @@ struct IPLUGRCCPP : IObject
       FileSystemUtils::Path basePath = pRuntimeObjectSystem->FindFile(GetConstructor()->GetFileName()).ParentPath();
       pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(basePath).c_str());
       pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(basePath/"resources").c_str());
+      FileSystemUtils::Path iPlugDir = basePath.ParentPath().ParentPath();
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "IPlug").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "IGraphics").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "IGraphics" / "Platforms").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "IGraphics" / "Controls").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "IGraphics" / "Drawing").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "IPlug").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "IPlug" / "APP").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "IPlug" / "Extras").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "IPlug" / "Extras" / "RCCPP").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "WDL").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "IPlug" / "RTAudio").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "IPlug" / "RTMidi").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "IGraphics" / "STB").c_str());
+#if defined IGRAPHICS_NANOVG
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "IGraphics" / "NanoVG" / "src").c_str());
+#elif defined IGRAPHICS_SKIA
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "Build" / "src" / "skia").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "Build" / "src" / "skia" / "include" / "core").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "Build" / "src" / "skia" / "include" / "effects").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "Build" / "src" / "skia" / "include" / "config").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "Build" / "src" / "skia" / "include" / "utils").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "Build" / "src" / "skia" / "include" / "utils" / "mac").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "Build" / "src" / "skia" / "include" / "gpu").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "Build" / "src" / "skia" / "experimental" / "svg" / "model").c_str());
+#endif
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "IGraphics" / "NanoSVG" / "src").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "Build" / "src" / "rccpp" / "Aurora").c_str());
+#ifdef OS_MAC
+#ifdef IGRAPHICS_NANOVG
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "IGraphics" / "MetalNanoVG" / "src").c_str());
+#endif
+      pRuntimeObjectSystem->AddLibraryDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "Build" / "mac" / "lib").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "WDL" / "swell").c_str());
+      pRuntimeObjectSystem->SetAdditionalCompileOptions("-DIPLUG_RCCPP -DIPLUG_EDITOR -DIPLUG_DSP -DIGRAPHICS_SKIA -DIGRAPHICS_METAL -DAPP_API -std=c++14 -Wno-deprecated-declarations");
+#elif defined OS_WIN
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "IGraphics" / "glad_GL2" / "include").c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir / "Dependencies" / "IGraphics" / "glad_GL2" / "src").c_str());
+      pRuntimeObjectSystem->SetAdditionalCompileOptions("-DIPLUG_RCCPP -DIPLUG_EDITOR -DIPLUG_DSP -DIGRAPHICS_NANOVG -DIGRAPHICS_GL2 -DAPP_API -DNOMINMAX /wd4068 /std:c++14");
+#endif
     }
   }
 };

@@ -829,50 +829,6 @@ bool IPlugAPPHost::InitRCCPP()
   }
   
   mRuntimeObjectSystem->GetObjectFactorySystem()->AddListener(this);
-
-  FileSystemUtils::Path basePath = mRuntimeObjectSystem->FindFile(__FILE__);
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(basePath).c_str());
-  FileSystemUtils::Path iPlugDir = basePath.ParentPath().ParentPath().ParentPath();
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IPlug").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IGraphics").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IGraphics"/"Platforms").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IGraphics"/"Controls").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IGraphics"/"Drawing").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IPlug").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IPlug"/"APP").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IPlug"/"Extras").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IPlug"/"Extras"/"RCCPP").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"WDL").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IPlug"/"RTAudio").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IPlug"/"RTMidi").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"STB").c_str());
-  #if defined IGRAPHICS_NANOVG
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"NanoVG"/"src").c_str());
-  #elif defined IGRAPHICS_SKIA
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"Build"/"src"/"skia").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"Build"/"src"/"skia"/"include"/"core").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"Build"/"src"/"skia"/"include"/"effects").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"Build"/"src"/"skia"/"include"/"config").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"Build"/"src"/"skia"/"include"/"utils").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"Build"/"src"/"skia"/"include"/"utils"/"mac").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"Build"/"src"/"skia"/"include"/"gpu").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"Build"/"src"/"skia"/"experimental"/"svg"/"model").c_str());
-  #endif
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"NanoSVG"/"src").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"Build"/"src"/"rccpp"/"Aurora").c_str());
-#ifdef OS_MAC
-  #ifdef IGRAPHICS_NANOVG
-    mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"MetalNanoVG"/"src").c_str());
-  #endif
-  mRuntimeObjectSystem->AddLibraryDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"Build"/"mac"/"lib").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"WDL"/"swell").c_str());
-  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIPLUG_RCCPP -DIPLUG_EDITOR -DIPLUG_DSP -DIGRAPHICS_SKIA -DIGRAPHICS_METAL -DAPP_API -std=c++14 -Wno-deprecated-declarations");
-#elif defined OS_WIN
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"glad_GL2"/"include").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"Dependencies"/"IGraphics"/"glad_GL2"/"src").c_str());
-  mRuntimeObjectSystem->SetAdditionalCompileOptions("-DIPLUG_RCCPP -DIPLUG_EDITOR -DIPLUG_DSP -DIGRAPHICS_SKIA -DIGRAPHICS_GL2 -DAPP_API -DNOMINMAX /wd4068 /std:c++14");
-#endif
-  
   mSystemtable->pPlug = mIPlug;
 
   mRCCPTimer = std::unique_ptr<Timer>(Timer::Create(std::bind(&IPlugAPPHost::OnRCCPPTimerTick, this, std::placeholders::_1), RCCPP_TIMER_RATE));
@@ -897,7 +853,7 @@ void IPlugAPPHost::CleanupRCCPP()
     mRuntimeObjectSystem->GetObjectFactorySystem()->RemoveListener(this);
 
     // delete object via correct interface
-    IObject* pObj = mRuntimeObjectSystem->GetObjectFactorySystem()->GetObject(mObjectId);
+    IObject* pObj = mRuntimeObjectSystem->GetObjectFactorySystem()->GetTheObject(mObjectId);
     delete pObj;
   }
 
@@ -911,7 +867,7 @@ void IPlugAPPHost::OnConstructorsAdded()
   // This could have resulted in a change of object pointer, so release old and get new one.
   if(mUpdateable)
   {
-    IObject* pObj = mRuntimeObjectSystem->GetObjectFactorySystem()->GetObject(mObjectId);
+    IObject* pObj = mRuntimeObjectSystem->GetObjectFactorySystem()->GetTheObject(mObjectId);
     
     if(mUpdateable == nullptr)
     {
