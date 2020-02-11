@@ -223,11 +223,7 @@ public:
   static WDL_DLGRET PreferencesDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
   static WDL_DLGRET MainDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-#ifdef IPLUG_RCCPP
-    IPlugAPP* GetPlug() { return mIPlug; }
-#else
-    IPlugAPP* GetPlug() { return mIPlug.get(); }
-#endif
+  IPlugAPP* GetPlug() { return mIPlug; }
 private:
 #ifdef IPLUG_RCCPP
   bool InitRCCPP();
@@ -246,12 +242,7 @@ private:
   IUpdateable* mUpdateable = nullptr;
   ObjectId mObjectId;
 #endif
-
-#ifdef IPLUG_RCCPP
   IPlugAPP* mIPlug = nullptr;
-#else
-  std::unique_ptr<IPlugAPP> mIPlug = nullptr;
-#endif
   std::unique_ptr<RtAudio> mDAC = nullptr;
   std::unique_ptr<RtMidiIn> mMidiIn = nullptr;
   std::unique_ptr<RtMidiOut> mMidiOut = nullptr;

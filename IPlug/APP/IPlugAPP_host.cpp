@@ -66,6 +66,8 @@ IPlugAPPHost::~IPlugAPPHost()
 
   if(mMidiOut)
     mMidiOut->closePort();
+  
+  delete mIPlug;
 }
 
 //static
@@ -91,13 +93,8 @@ bool IPlugAPPHost::Init()
   ProbeMidiIO(); // find out what midi IO devs are available and put their names in the global variables gMidiInputDevs / gMidiOutputDevs
   SelectMIDIDevice(ERoute::kInput, mState.mMidiInDev.Get());
   SelectMIDIDevice(ERoute::kOutput, mState.mMidiOutDev.Get());
-
-    
-
-
   mIPlug->OnParamReset(kReset);
   mIPlug->OnActivate(true);
-
   
   return true;
 }
@@ -818,47 +815,6 @@ void IPlugAPPHost::ErrorCallback(RtAudioError::Type type, const std::string &err
 }
 
 #ifdef IPLUG_RCCPP
-
-void IPlugAPPHost::CleanupRCCPP()
-{
-  if(mRCCPTimer)
-  {
-    mRCCPTimer->Stop();
-  }
-  
-  if(mRuntimeObjectSystem)
-  {
-    mRuntimeObjectSystem->CleanObjectFiles(); // clean temp object files
-  }
-
-  if(mRuntimeObjectSystem && mRuntimeObjectSystem->GetObjectFactorySystem())
-  {
-    mRuntimeObjectSystem->GetObjectFactorySystem()->RemoveListener(this);
-
-    // delete object via correct interface
-    IObject* pObj = mRuntimeObjectSystem->GetObjectFactorySystem()->GetObject(mObjectId);
-    delete pObj;
-  }
-
-  delete mRuntimeObjectSystem;
-  delete mCompilerLogger;
-}
-
-void IPlugAPPHost::OnConstructorsAdded()
-{
-  // This could have resulted in a change of object pointer, so release old and get new one.
-  if(mUpdateable)
-  {
-    IObject* pObj = mRuntimeObjectSystem->GetObjectFactorySystem()->GetObject(mObjectId);
-    
-    if(mUpdateable == nullptr)
-    {
-      delete pObj;
-      mCompilerLogger->LogError( "Error - no updateable interface found\n");
-    }
-  }
-}
-
 bool IPlugAPPHost::InitRCCPP()
 {
   mRuntimeObjectSystem = new RuntimeObjectSystem;
@@ -924,6 +880,47 @@ bool IPlugAPPHost::InitRCCPP()
   mRCCPTimer = std::unique_ptr<Timer>(Timer::Create(std::bind(&IPlugAPPHost::OnRCCPPTimerTick, this, std::placeholders::_1), RCCPP_TIMER_RATE));
   
   return true;
+}
+
+void IPlugAPPHost::CleanupRCCPP()
+{
+  if(mRCCPTimer)
+  {
+    mRCCPTimer->Stop();
+  }
+  
+  if(mRuntimeObjectSystem)
+  {
+    mRuntimeObjectSystem->CleanObjectFiles(); // clean temp object files
+  }
+
+  if(mRuntimeObjectSystem && mRuntimeObjectSystem->GetObjectFactorySystem())
+  {
+    mRuntimeObjectSystem->GetObjectFactorySystem()->RemoveListener(this);
+
+    // delete object via correct interface
+    IObject* pObj = mRuntimeObjectSystem->GetObjectFactorySystem()->GetObject(mObjectId);
+    delete pObj;
+  }
+
+  delete mRuntimeObjectSystem;
+  delete mCompilerLogger;
+}
+
+
+void IPlugAPPHost::OnConstructorsAdded()
+{
+  // This could have resulted in a change of object pointer, so release old and get new one.
+  if(mUpdateable)
+  {
+    IObject* pObj = mRuntimeObjectSystem->GetObjectFactorySystem()->GetObject(mObjectId);
+    
+    if(mUpdateable == nullptr)
+    {
+      delete pObj;
+      mCompilerLogger->LogError( "Error - no updateable interface found\n");
+    }
+  }
 }
 
 void IPlugAPPHost::OnRCCPPTimerTick(Timer& t)
