@@ -36,6 +36,7 @@ RUNTIME_COMPILER_SOURCEDEPENDENCY_FILE("../../IPlug/IPlugTimer", ".cpp");
 #endif
 
 #include "RuntimeObjectSystem/RuntimeLinkLibrary.h"
+#include "RuntimeObjectSystem/RuntimeObjectSystem.h"
 
 #if defined OS_WIN
   RUNTIME_COMPILER_LINKLIBRARY("Gdi32.lib");
@@ -66,6 +67,13 @@ struct IPLUGRCCPP : IObject
       pPlug->CloseWindow();
       pPlug = new PLUG_CLASS_NAME(InstanceInfo{ PerModuleInterface::g_pSystemTable->pAppHost });
       pPlug->OpenWindow(PerModuleInterface::g_pSystemTable->pParentWindow);
+    }
+    else
+    {
+      RuntimeObjectSystem* pRuntimeObjectSystem = reinterpret_cast<RuntimeObjectSystem*>(PerModuleInterface::g_pRuntimeObjectSystem); \
+      FileSystemUtils::Path basePath = pRuntimeObjectSystem->FindFile(GetConstructor()->GetFileName()).ParentPath();
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(basePath).c_str());
+      pRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(basePath/"resources").c_str());
     }
   }
 };

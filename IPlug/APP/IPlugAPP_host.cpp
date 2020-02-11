@@ -832,8 +832,6 @@ bool IPlugAPPHost::InitRCCPP()
 
   FileSystemUtils::Path basePath = mRuntimeObjectSystem->FindFile(__FILE__);
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(basePath).c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path("/Users/oli/Dev/iPlug2/Examples/IPlugEffect").c_str());
-  mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path("/Users/oli/Dev/iPlug2/Examples/IPlugEffect/resources").c_str());
   FileSystemUtils::Path iPlugDir = basePath.ParentPath().ParentPath().ParentPath();
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IPlug").c_str());
   mRuntimeObjectSystem->AddIncludeDir(FileSystemUtils::Path(iPlugDir/"IGraphics").c_str());
