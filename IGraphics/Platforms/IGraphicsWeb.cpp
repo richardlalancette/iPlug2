@@ -304,9 +304,13 @@ static EM_BOOL outside_mouse_callback(int eventType, const EmscriptenMouseEvent*
   
   IMouseMod modifiers(0, 0, pEvent->shiftKey, pEvent->ctrlKey, pEvent->altKey);
   
-  double x = pEvent->canvasX;
-  double y = pEvent->canvasY;
-
+  double x = pEvent->targetX;
+  double y = pEvent->targetY;
+  
+  val rect = GetCanvas().call<val>("getBoundingClientRect");
+  x -= rect["left"].as<double>();
+  y -= rect["top"].as<double>();
+  
   x /= pGraphics->GetDrawScale();
   y /= pGraphics->GetDrawScale();
   
@@ -314,11 +318,11 @@ static EM_BOOL outside_mouse_callback(int eventType, const EmscriptenMouseEvent*
   {
     case EMSCRIPTEN_EVENT_MOUSEUP:
       pGraphics->OnMouseUp(x, y, modifiers);
-      emscripten_set_mousemove_callback("#window", pGraphics, 1, nullptr);
-      emscripten_set_mouseup_callback("#window", pGraphics, 1, nullptr);
+      emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, pGraphics, 1, nullptr);
+      emscripten_set_mouseup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, pGraphics, 1, nullptr);
       break;
     case EMSCRIPTEN_EVENT_MOUSEMOVE:
-      if(pEvent->buttons != 0 && !pGraphics->IsInTextEntry())
+      if(pEvent->buttons != 0 && !pGraphics->IsInPlatformTextEntry())
         pGraphics->OnMouseDrag(x, y, pEvent->movementX, pEvent->movementY, modifiers);
       break;
     default:
@@ -337,8 +341,8 @@ static EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent* pEvent,
   
   IMouseMod modifiers(pEvent->buttons == 1, pEvent->buttons == 2, pEvent->shiftKey, pEvent->ctrlKey, pEvent->altKey);
   
-  double x = pEvent->canvasX;
-  double y = pEvent->canvasY;
+  double x = pEvent->targetX;
+  double y = pEvent->targetY;
   
   x /= pGraphics->GetDrawScale();
   y /= pGraphics->GetDrawScale();
@@ -374,7 +378,7 @@ static EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent* pEvent,
         pGraphics->OnMouseOver(x, y, modifiers);
       else
       {
-        if(!pGraphics->IsInTextEntry())
+        if(!pGraphics->IsInPlatformTextEntry())
           pGraphics->OnMouseDrag(x, y, pEvent->movementX, pEvent->movementY, modifiers);
       }
       break;
@@ -382,13 +386,13 @@ static EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent* pEvent,
     case EMSCRIPTEN_EVENT_MOUSEENTER:
       pGraphics->OnSetCursor();
       pGraphics->OnMouseOver(x, y, modifiers);
-      emscripten_set_mousemove_callback("#window", pGraphics, 1, nullptr);
+      emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, pGraphics, 1, nullptr);
       break;
     case EMSCRIPTEN_EVENT_MOUSELEAVE:
       if(pEvent->buttons != 0)
       {
-        emscripten_set_mousemove_callback("#window", pGraphics, 1, outside_mouse_callback);
-        emscripten_set_mouseup_callback("#window", pGraphics, 1, outside_mouse_callback);
+        emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, pGraphics, 1, outside_mouse_callback);
+        emscripten_set_mouseup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, pGraphics, 1, outside_mouse_callback);
       }
       pGraphics->OnMouseOut(); break;
     default:
@@ -422,6 +426,33 @@ static EM_BOOL wheel_callback(int eventType, const EmscriptenWheelEvent* pEvent,
   return true;
 }
 
+static EM_BOOL complete_text_entry(int eventType, const EmscriptenFocusEvent* focusEvent, void* pUserData)
+{
+  IGraphicsWeb* pGraphics = (IGraphicsWeb*) pUserData;
+  
+  val input = val::global("document").call<val>("getElementById", std::string("textEntry"));
+  std::string str = input["value"].as<std::string>();
+  val::global("document")["body"].call<void>("removeChild", input);
+  pGraphics->SetControlValueAfterTextEdit(str.c_str());
+  
+  return true;
+}
+
+static EM_BOOL text_entry_keydown(int eventType, const EmscriptenKeyboardEvent* pEvent, void* pUserData)
+{
+  IGraphicsWeb* pGraphicsWeb = (IGraphicsWeb*) pUserData;
+  
+  IKeyPress keyPress {pEvent->key, domVKToWinVK(pEvent->keyCode),
+    static_cast<bool>(pEvent->shiftKey),
+    static_cast<bool>(pEvent->ctrlKey),
+    static_cast<bool>(pEvent->altKey)};
+  
+  if (keyPress.VK == kVK_RETURN || keyPress.VK ==  kVK_TAB)
+    return complete_text_entry(0, nullptr, pUserData);
+  
+  return false;
+}
+
 IColorPickerHandlerFunc gColorPickerHandlerFunc = nullptr;
 
 static void color_picker_callback(val e)
@@ -441,8 +472,14 @@ static void color_picker_callback(val e)
   }
 }
 
+static void file_dialog_callback(val e)
+{
+  // DBGMSG(e["files"].as<std::string>().c_str());
+}
+
 EMSCRIPTEN_BINDINGS(events) {
   function("color_picker_callback", color_picker_callback);
+  function("file_dialog_callback", file_dialog_callback);
 }
 
 #pragma mark -
@@ -454,14 +491,14 @@ IGraphicsWeb::IGraphicsWeb(IGEditorDelegate& dlg, int w, int h, int fps, float s
   
   DBGMSG("Preloaded %i images\n", keys["length"].as<int>());
   
-  emscripten_set_mousedown_callback("canvas", this, 1, mouse_callback);
-  emscripten_set_mouseup_callback("canvas", this, 1, mouse_callback);
-  emscripten_set_mousemove_callback("canvas", this, 1, mouse_callback);
-  emscripten_set_mouseenter_callback("canvas", this, 1, mouse_callback);
-  emscripten_set_mouseleave_callback("canvas", this, 1, mouse_callback);
-  emscripten_set_wheel_callback("canvas", this, 1, wheel_callback);
-  emscripten_set_keydown_callback("#window", this, 1, key_callback);
-  emscripten_set_keyup_callback("#window", this, 1, key_callback);
+  emscripten_set_mousedown_callback("#canvas", this, 1, mouse_callback);
+  emscripten_set_mouseup_callback("#canvas", this, 1, mouse_callback);
+  emscripten_set_mousemove_callback("#canvas", this, 1, mouse_callback);
+  emscripten_set_mouseenter_callback("#canvas", this, 1, mouse_callback);
+  emscripten_set_mouseleave_callback("#canvas", this, 1, mouse_callback);
+  emscripten_set_wheel_callback("#canvas", this, 1, wheel_callback);
+  emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, 1, key_callback);
+  emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, 1, key_callback);
 }
 
 IGraphicsWeb::~IGraphicsWeb()
@@ -496,9 +533,9 @@ void IGraphicsWeb::HideMouseCursor(bool hide, bool lock)
   if (hide)
   {
     if (lock)
-      emscripten_request_pointerlock("canvas", EM_FALSE);
+      emscripten_request_pointerlock("#canvas", EM_FALSE);
     else
-      emscripten_hide_mouse();
+      val::global("document")["body"]["style"].set("cursor", "none");
     
     mCursorLock = lock;
   }
@@ -603,23 +640,33 @@ EMsgBoxResult IGraphicsWeb::ShowMessageBox(const char* str, const char* caption,
 
 void IGraphicsWeb::PromptForFile(WDL_String& filename, WDL_String& path, EFileAction action, const char* ext)
 {
-  val inputEl = val::global("document").call<val>("createElement", std::string("input"));
+  //TODO
+  // val inputEl = val::global("document").call<val>("createElement", std::string("input"));
   
-  inputEl.call<void>("setAttribute", std::string("accept"), std::string(ext));
-  inputEl.call<void>("click");
+  // inputEl.call<void>("setAttribute", std::string("type"), std::string("file"));
+  // inputEl.call<void>("setAttribute", std::string("accept"), std::string(ext));
+  // inputEl.call<void>("click");
+  // inputEl.call<void>("addEventListener", std::string("input"), val::module_property("file_dialog_callback"), false);
+  // inputEl.call<void>("addEventListener", std::string("onChange"), val::module_property("file_dialog_callback"), false);
 }
 
 void IGraphicsWeb::PromptForDirectory(WDL_String& path)
 {
-  val inputEl = val::global("document").call<val>("createElement", std::string("input"));
+  //TODO
+  // val inputEl = val::global("document").call<val>("createElement", std::string("input"));
 
-  inputEl.call<void>("setAttribute", std::string("directory"));
-  inputEl.call<void>("setAttribute", std::string("webkitdirectory"));
-  inputEl.call<void>("click");
+  // inputEl.call<void>("setAttribute", std::string("type"), std::string("file"));
+  // inputEl.call<void>("setAttribute", std::string("directory"), true);
+  // inputEl.call<void>("setAttribute", std::string("webkitdirectory"), true);
+  // inputEl.call<void>("click");
+  // inputEl.call<void>("addEventListener", std::string("input"), val::module_property("file_dialog_callback"), false);
+  // inputEl.call<void>("addEventListener", std::string("onChange"), val::module_property("file_dialog_callback"), false);
 }
 
 bool IGraphicsWeb::PromptForColor(IColor& color, const char* str, IColorPickerHandlerFunc func)
 {
+  ReleaseMouseCapture();
+
   gColorPickerHandlerFunc = func;
 
   val inputEl = val::global("document").call<val>("createElement", std::string("input"));
@@ -631,33 +678,6 @@ bool IGraphicsWeb::PromptForColor(IColor& color, const char* str, IColorPickerHa
   inputEl.call<void>("addEventListener", std::string("input"), val::module_property("color_picker_callback"), false);
   inputEl.call<void>("addEventListener", std::string("onChange"), val::module_property("color_picker_callback"), false);
 
-  return false;
-}
-
-static EM_BOOL complete_text_entry(int eventType, const EmscriptenFocusEvent* focusEvent, void* pUserData)
-{
-  IGraphicsWeb* pGraphics = (IGraphicsWeb*) pUserData;
-  
-  val input = val::global("document").call<val>("getElementById", std::string("textEntry"));
-  std::string str = input["value"].as<std::string>();
-  val::global("document")["body"].call<void>("removeChild", input);
-  pGraphics->SetControlValueAfterTextEdit(str.c_str());
-  
-  return true;
-}
-
-static EM_BOOL text_entry_keydown(int eventType, const EmscriptenKeyboardEvent* pEvent, void* pUserData)
-{
-  IGraphicsWeb* pGraphicsWeb = (IGraphicsWeb*) pUserData;
-  
-  IKeyPress keyPress {pEvent->key, domVKToWinVK(pEvent->keyCode),
-    static_cast<bool>(pEvent->shiftKey),
-    static_cast<bool>(pEvent->ctrlKey),
-    static_cast<bool>(pEvent->altKey)};
-  
-  if (keyPress.VK == kVK_RETURN || keyPress.VK ==  kVK_TAB)
-    return complete_text_entry(0, nullptr, pUserData);
-  
   return false;
 }
 
@@ -718,7 +738,7 @@ void IGraphicsWeb::CreatePlatformTextEntry(int paramIdx, const IText& text, cons
   emscripten_set_keydown_callback("textEntry", this, 1, text_entry_keydown);
 }
 
-IPopupMenu* IGraphicsWeb::CreatePlatformPopupMenu(IPopupMenu& menu, const IRECT& bounds)
+IPopupMenu* IGraphicsWeb::CreatePlatformPopupMenu(IPopupMenu& menu, const IRECT& bounds, bool& isAsync)
 {
   return nullptr;
 }
