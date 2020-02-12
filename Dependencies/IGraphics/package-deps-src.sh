@@ -11,6 +11,10 @@ mv ./src/skia/experimental/svg/model ./skia_experimental_tmp
 mv ./src/skia/src/core ./skia_src_core_tmp
 mv ./src/skia/src/xml ./skia_src_xml_tmp
 
+if [ -f ./src/resvg/capi/resvg.h ]; then
+  mv ./src/resvg/capi/resvg.h resvg.h
+fi
+
 if [ "$(uname)" == "Darwin" ]; then
 rm -r src
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
@@ -18,6 +22,8 @@ rm -r src
 else # on Windows we need to retain the entire contents of src since we don't have the unix folder heirarcy
 rm -r src/skia
 fi
+
+rm -r src/resvg
 
 mkdir -p ./src/skia
 mkdir -p ./src/skia/experimental/svg
@@ -27,3 +33,8 @@ mv ./skia_modules_tmp ./src/skia/modules
 mv ./skia_experimental_tmp ./src/skia/experimental/svg/model
 mv ./skia_src_core_tmp ./src/skia/src/core
 mv ./skia_src_xml_tmp ./src/skia/src/xml
+
+if [ -f ./resvg.h ]; then
+  mkdir -p ./src/resvg/capi
+  mv resvg.h ./src/resvg/capi
+fi

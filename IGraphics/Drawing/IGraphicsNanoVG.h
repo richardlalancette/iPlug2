@@ -73,6 +73,15 @@
 BEGIN_IPLUG_NAMESPACE
 BEGIN_IGRAPHICS_NAMESPACE
 
+/** Converts IColor to a NVGcolor */
+NVGcolor NanoVGColor(const IColor& color, const IBlend* pBlend = 0);
+
+/** Set the NanoVG context blend based on IBlend */
+void NanoVGSetBlendMode(NVGcontext* pContext, const IBlend* pBlend);
+
+/** Converts IPattern to NVGpaint */
+NVGpaint NanoVGPaint(NVGcontext* pContext, const IPattern& pattern, const IBlend* pBlend = 0);
+
 /** IGraphics draw class using NanoVG  
 *   @ingroup DrawClasses */
 class IGraphicsNanoVG : public IGraphicsPathBase
@@ -115,6 +124,7 @@ public:
   void ReleaseBitmap(const IBitmap& bitmap) override { }; // NO-OP
   void RetainBitmap(const IBitmap& bitmap, const char * cacheName) override { }; // NO-OP
   bool BitmapExtSupported(const char* ext) override;
+  IBitmap RasterizeSVGToBitmap(const char* path, int width, int height, int targetScale) override;
 
   void DeleteFBO(NVGframebuffer* pBuffer);
     
@@ -140,10 +150,6 @@ protected:
 
   void DoMeasureText(const IText& text, const char* str, IRECT& bounds) const override;
   void DoDrawText(const IText& text, const char* str, const IRECT& bounds, const IBlend* pBlend) override;
-
-#ifdef IGRAPHICS_RESVG
-  void DoRasterizeSVGToAPIBitmap(SVGHolder* pHolder, APIBitmap* pAPIBitmap, float x, float y) override;
-#endif
 
 private:
   void PrepareAndMeasureText(const IText& text, const char* str, IRECT& r, double& x, double & y) const;

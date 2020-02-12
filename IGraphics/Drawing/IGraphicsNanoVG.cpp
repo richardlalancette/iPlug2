@@ -155,7 +155,10 @@ static void nvgReadPixels(NVGcontext* pContext, int image, int x, int y, int wid
 
 #pragma mark - Utilities
 
-static inline NVGcolor NanoVGColor(const IColor& color, const IBlend* pBlend = 0)
+BEGIN_IPLUG_NAMESPACE
+BEGIN_IGRAPHICS_NAMESPACE
+
+NVGcolor NanoVGColor(const IColor& color, const IBlend* pBlend)
 {
   NVGcolor c;
   c.r = (float) color.R / 255.0f;
@@ -165,32 +168,30 @@ static inline NVGcolor NanoVGColor(const IColor& color, const IBlend* pBlend = 0
   return c;
 }
 
-static inline void NanoVGSetBlendMode(NVGcontext* context, const IBlend* pBlend)
+void NanoVGSetBlendMode(NVGcontext* pContext, const IBlend* pBlend)
 {
   if (!pBlend)
   {
-    nvgGlobalCompositeOperation(context, NVG_SOURCE_OVER);
+    nvgGlobalCompositeOperation(pContext, NVG_SOURCE_OVER);
       return;
   }
   
   switch (pBlend->mMethod)
   {
-    case EBlend::Default:       // fall through
-    case EBlend::Clobber:       // fall through
-    case EBlend::SourceOver:    nvgGlobalCompositeOperation(context, NVG_SOURCE_OVER);                break;
-    case EBlend::SourceIn:      nvgGlobalCompositeOperation(context, NVG_SOURCE_IN);                  break;
-    case EBlend::SourceOut:     nvgGlobalCompositeOperation(context, NVG_SOURCE_OUT);                 break;
-    case EBlend::SourceAtop:    nvgGlobalCompositeOperation(context, NVG_ATOP);                       break;
-    case EBlend::DestOver:      nvgGlobalCompositeOperation(context, NVG_DESTINATION_OVER);           break;
-    case EBlend::DestIn:        nvgGlobalCompositeOperation(context, NVG_DESTINATION_IN);             break;
-    case EBlend::DestOut:       nvgGlobalCompositeOperation(context, NVG_DESTINATION_OUT);            break;
-    case EBlend::DestAtop:      nvgGlobalCompositeOperation(context, NVG_DESTINATION_ATOP);           break;
-    case EBlend::Add:           nvgGlobalCompositeBlendFunc(context, NVG_SRC_ALPHA, NVG_DST_ALPHA);   break;
-    case EBlend::XOR:           nvgGlobalCompositeOperation(context, NVG_XOR);                        break;
+    case EBlend::SrcOver:    nvgGlobalCompositeOperation(pContext, NVG_SOURCE_OVER);                break;
+    case EBlend::SrcIn:      nvgGlobalCompositeOperation(pContext, NVG_SOURCE_IN);                  break;
+    case EBlend::SrcOut:     nvgGlobalCompositeOperation(pContext, NVG_SOURCE_OUT);                 break;
+    case EBlend::SrcAtop:    nvgGlobalCompositeOperation(pContext, NVG_ATOP);                       break;
+    case EBlend::DstOver:    nvgGlobalCompositeOperation(pContext, NVG_DESTINATION_OVER);           break;
+    case EBlend::DstIn:      nvgGlobalCompositeOperation(pContext, NVG_DESTINATION_IN);             break;
+    case EBlend::DstOut:     nvgGlobalCompositeOperation(pContext, NVG_DESTINATION_OUT);            break;
+    case EBlend::DstAtop:    nvgGlobalCompositeOperation(pContext, NVG_DESTINATION_ATOP);           break;
+    case EBlend::Add:        nvgGlobalCompositeBlendFunc(pContext, NVG_SRC_ALPHA, NVG_DST_ALPHA);   break;
+    case EBlend::XOR:        nvgGlobalCompositeOperation(pContext, NVG_XOR);                        break;
   }
 }
 
-static NVGpaint NanoVGPaint(NVGcontext* pContext, const IPattern& pattern, const IBlend* pBlend)
+NVGpaint NanoVGPaint(NVGcontext* pContext, const IPattern& pattern, const IBlend* pBlend)
 {
   assert(pattern.NStops() > 0);
   
@@ -214,6 +215,9 @@ static NVGpaint NanoVGPaint(NVGcontext* pContext, const IPattern& pattern, const
     return nvgLinearGradient(pContext, s[0], s[1], e[0], e[1], icol, ocol);
   }
 }
+
+END_IGRAPHICS_NAMESPACE
+END_IPLUG_NAMESPACE
 
 #pragma mark -
 
@@ -241,13 +245,13 @@ const char* IGraphicsNanoVG::GetDrawingAPIStr()
     return "NanoVG | WebGL";
   #else
     #if defined IGRAPHICS_GL2
-      return "NanoVG | OpenGL2";
+      return "NanoVG | GL2";
     #elif defined IGRAPHICS_GL3
-      return "NanoVG | OpenGL3";
+      return "NanoVG | GL3";
     #elif defined IGRAPHICS_GLES2
-      return "NanoVG | OpenGLES2";
+      return "NanoVG | GLES2";
     #elif defined IGRAPHICS_GLES3
-      return "NanoVG | OpenGLES3";
+      return "NanoVG | GLES3";
     #endif
   #endif
 #endif
@@ -320,13 +324,19 @@ APIBitmap* IGraphicsNanoVG::LoadAPIBitmap(const char* fileNameOrResID, int scale
     pResData = LoadWinResource(fileNameOrResID, ext, size, GetWinModuleHandle());
 
     if (pResData)
-      idx = nvgCreateImageMem(mVG, nvgImageFlags, (unsigned char*)pResData, size);
+    {
+      ActivateGLContext(); // no-op on non WIN/GL
+      idx = nvgCreateImageMem(mVG, nvgImageFlags, (unsigned char*) pResData, size);
+      DeactivateGLContext(); // no-op on non WIN/GL
+    }
   }
   else
 #endif
   if (location == EResourceLocation::kAbsolutePath)
   {
+    ActivateGLContext(); // no-op on non WIN/GL
     idx = nvgCreateImage(mVG, fileNameOrResID, nvgImageFlags);
+    DeactivateGLContext(); // no-op on non WIN/GL
   }
 
   return new Bitmap(mVG, fileNameOrResID, scale, idx, location == EResourceLocation::kPreloadedTexture);
@@ -348,6 +358,77 @@ APIBitmap* IGraphicsNanoVG::CreateAPIBitmap(int width, int height, int scale, do
   }
   
   return pAPIBitmap;
+}
+
+IBitmap IGraphicsNanoVG::RasterizeSVGToBitmap(const char* path, int width, int height, int targetScale)
+{
+#ifdef IGRAPHICS_RESVG
+  resvg_render_tree* pRenderTree = nullptr;
+  resvg_options opt;
+  resvg_init_options(&opt);
+  opt.font_family = "Times New Roman";
+  opt.languages = "en";
+  opt.dpi = 72.f;
+  opt.path = path;
+  int err = resvg_parse_tree_from_file(path, &opt, &pRenderTree);
+  //  int err = resvg_parse_tree_from_data(svgStr.Get(), svgStr.GetLength(), &opt, &pRenderTree);
+
+  if(err == RESVG_OK && pRenderTree)
+  {
+    APIBitmap* pAPIBitmap = CreateAPIBitmap(width, height, targetScale, 1.f);
+
+    RawBitmapData data;
+    int stride = cairo_format_stride_for_width (CAIRO_FORMAT_ARGB32, width);
+    data.Resize(stride * height);
+    memset(data.Get(), 0, data.GetSize());
+    cairo_surface_t* pSurface = cairo_image_surface_create_for_data(data.Get(), CAIRO_FORMAT_ARGB32, width, height, stride);
+    cairo_t* cr = cairo_create(pSurface);
+
+  #ifdef IGRAPHICS_GL
+    cairo_matrix_t mat;
+    cairo_matrix_init_identity(&mat);
+    mat.yy = -1.0;
+    cairo_set_matrix(cr, &mat);
+    cairo_translate(cr, 0, -height);
+  #endif
+
+    resvg_cairo_render_to_canvas(pRenderTree, &opt, {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}, cr);
+
+    cairo_surface_flush(pSurface);
+
+    //ARGB -> RGBA (from Cairo png)
+    for (int i = 0; i < data.GetSize(); i += 4)
+    {
+      uint8_t* b = data.Get() + i;
+      uint32_t pixel;
+      uint8_t  alpha;
+      memcpy (&pixel, b, sizeof (uint32_t));
+      alpha = (pixel & 0xff000000) >> 24;
+
+      if (alpha == 0)
+      {
+        b[0] = b[1] = b[2] = b[3] = 0;
+      }
+      else
+      {
+        b[0] = (((pixel & 0xff0000) >> 16) * 255 + alpha / 2) / alpha;
+        b[1] = (((pixel & 0x00ff00) >>  8) * 255 + alpha / 2) / alpha;
+        b[2] = (((pixel & 0x0000ff) >>  0) * 255 + alpha / 2) / alpha;
+        b[3] = alpha;
+      }
+    }
+    nvgUpdateImage(static_cast<NVGcontext*>(GetDrawContext()), pAPIBitmap->GetBitmap(), data.Get());
+
+    cairo_destroy(cr);
+    cairo_surface_destroy(pSurface);
+    
+    IBitmap bitmap = IBitmap(pAPIBitmap, 1, true, path);
+    RetainBitmap(bitmap, path);
+    return bitmap;
+  }
+#endif
+  
+  return IBitmap();
 }
 
 void IGraphicsNanoVG::GetLayerBitmapData(const ILayerPtr& layer, RawBitmapData& data)
@@ -396,12 +477,12 @@ void IGraphicsNanoVG::ApplyShadowMask(ILayerPtr& layer, RawBitmapData& mask, con
     PushLayer(layer.get());
     PushLayer(&shadowLayer);
     DrawBitmap(maskBitmap, bounds, 0, 0, nullptr);
-    IBlend blend1(EBlend::SourceIn, 1.0);
+    IBlend blend1(EBlend::SrcIn, 1.0);
     PathRect(layer->Bounds());
     PathTransformTranslate(-shadow.mXOffset, -shadow.mYOffset);
     PathFill(shadow.mPattern, IFillOptions(), &blend1);
     PopLayer();
-    IBlend blend2(EBlend::DestOver, shadow.mOpacity);
+    IBlend blend2(EBlend::DstOver, shadow.mOpacity);
     bounds.Translate(shadow.mXOffset, shadow.mYOffset);
     DrawBitmap(tempLayerBitmap, bounds, 0, 0, &blend2);
     PopLayer();
@@ -869,53 +950,3 @@ void IGraphicsNanoVG::ClearFBOStack()
     mFBOStack.pop();
   }
 }
-
-#ifdef IGRAPHICS_RESVG
-void IGraphicsNanoVG::DoRasterizeSVGToAPIBitmap(SVGHolder* pHolder, APIBitmap* pAPIBitmap, float x, float y)
-{
-  RawBitmapData data;
-  int stride = cairo_format_stride_for_width (CAIRO_FORMAT_ARGB32, pAPIBitmap->GetWidth());
-  data.Resize(stride * pAPIBitmap->GetHeight());
-  memset(data.Get(), 0, data.GetSize());
-  cairo_surface_t* pSurface = cairo_image_surface_create_for_data(data.Get(), CAIRO_FORMAT_ARGB32, pAPIBitmap->GetWidth(), pAPIBitmap->GetHeight(), stride);
-  cairo_t* cr = cairo_create(pSurface);
-
-#ifdef IGRAPHICS_GL
-  cairo_matrix_t mat;
-  cairo_matrix_init_identity(&mat);
-  mat.yy = -1.0;
-  cairo_set_matrix(cr, &mat);
-  cairo_translate(cr, 0, -pAPIBitmap->GetHeight());
-#endif
-
-  resvg_cairo_render_to_canvas(pHolder->mRenderTree, &pHolder->mOptions, {static_cast<uint32_t>(pAPIBitmap->GetWidth()), static_cast<uint32_t>(pAPIBitmap->GetHeight())}, cr);
-
-  cairo_surface_flush(pSurface);
-
-  //ARGB -> RGBA (from Cairo png)
-  for (uint32_t i = 0; i < data.GetSize(); i += 4)
-  {
-    uint8_t* b = data.Get() + i;
-    uint32_t pixel;
-    uint8_t  alpha;
-    memcpy (&pixel, b, sizeof (uint32_t));
-    alpha = (pixel & 0xff000000) >> 24;
-
-    if (alpha == 0)
-    {
-      b[0] = b[1] = b[2] = b[3] = 0;
-    }
-    else
-    {
-      b[0] = (((pixel & 0xff0000) >> 16) * 255 + alpha / 2) / alpha;
-      b[1] = (((pixel & 0x00ff00) >>  8) * 255 + alpha / 2) / alpha;
-      b[2] = (((pixel & 0x0000ff) >>  0) * 255 + alpha / 2) / alpha;
-      b[3] = alpha;
-    }
-  }
-  nvgUpdateImage(static_cast<NVGcontext*>(GetDrawContext()), pAPIBitmap->GetBitmap(), data.Get());
-
-  cairo_destroy(cr);
-  cairo_surface_destroy(pSurface);
-}
-#endif

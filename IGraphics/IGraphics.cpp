@@ -34,6 +34,7 @@ using VST3_API_BASE = iplug::IPlugVST3Controller;
 #include "ICornerResizerControl.h"
 #include "IPopupMenuControl.h"
 #include "ITextEntryControl.h"
+#include "IBubbleControl.h"
 
 using namespace iplug;
 using namespace igraphics;
@@ -153,6 +154,7 @@ void IGraphics::RemoveAllControls()
   ClearMouseOver();
 
   mPopupControl = nullptr;
+  mBubbleControl = nullptr;
   mTextEntryControl = nullptr;
   mCornerResizer = nullptr;
   mPerfDisplay = nullptr;
@@ -200,7 +202,7 @@ void IGraphics::SetControlValueAfterPopupMenu(IPopupMenu* pMenu)
 void IGraphics::AttachBackground(const char* name)
 {
   IBitmap bg = LoadBitmap(name, 1, false);
-  IControl* pBG = new IBitmapControl(0, 0, bg, kNoParameter, EBlend::Clobber);
+  IControl* pBG = new IBitmapControl(0, 0, bg, kNoParameter, EBlend::Default);
   pBG->SetDelegate(*GetDelegate());
   mControls.Insert(0, pBG);
 }
@@ -242,6 +244,26 @@ void IGraphics::AttachCornerResizer(ICornerResizerControl* pControl, EUIResizerM
   }
 }
 
+void IGraphics::AttachBubbleControl(const IText& text)
+{
+  if (!mBubbleControl)
+  {
+    mBubbleControl = std::make_unique<IBubbleControl>(text);
+    mBubbleControl->SetDelegate(*GetDelegate());
+  }
+}
+
+void IGraphics::AttachBubbleControl(IBubbleControl* pControl)
+{
+  std::unique_ptr<IBubbleControl> control(pControl);
+
+  if (!mBubbleControl)
+  {
+    mBubbleControl.swap(control);
+    mBubbleControl->SetDelegate(*GetDelegate());
+  }
+}
+
 void IGraphics::AttachPopupMenuControl(const IText& text, const IRECT& bounds)
 {
   if (!mPopupControl)
@@ -257,6 +279,16 @@ void IGraphics::AttachTextEntryControl()
   {
     mTextEntryControl = std::make_unique<ITextEntryControl>();
     mTextEntryControl->SetDelegate(*GetDelegate());
+  }
+}
+
+void IGraphics::ShowBubbleControl(IControl* pCaller, float x, float y, const char* str, EDirection dir, IRECT minimumContentBounds)
+{
+  assert(mBubbleControl && "No bubble control attached");
+  
+  if(mBubbleControl)
+  {
+    mBubbleControl->ShowBubble(pCaller, x, y, str, dir, minimumContentBounds);
   }
 }
 
@@ -358,6 +390,9 @@ void IGraphics::ForAllControlsFunc(std::function<void(IControl& control)> func)
   
   if (mPopupControl)
     func(*mPopupControl);
+  
+  if (mBubbleControl)
+    func(*mBubbleControl);
 }
 
 template<typename T, typename... Args>
@@ -1275,65 +1310,93 @@ void IGraphics::EnableLiveEdit(bool enable, const char* file, int gridsize)
 #endif
 }
 
-//#ifdef IGRAPHICS_SKIA
-//ISVG IGraphics::LoadSVG(const char* fileName, const char* units, float dpi)
-//{
-//  StaticStorage<SVGHolder>::Accessor storage(sSVGCache);
-//  SVGHolder* pHolder = storage.Find(fileName);
-//
-//  if(!pHolder)
-//  {
-//    WDL_String path;
-//    EResourceLocation resourceFound = LocateResource(fileName, "svg", path, GetBundleID(), GetWinModuleHandle(), GetSharedResourcesSubPath());
-//
-//    if (resourceFound == EResourceLocation::kNotFound)
-//      return ISVG(nullptr); // return invalid SVG
-//
-//    sk_sp<SkSVGDOM> svgDOM;
-//    bool success = false;
-//    SkDOM xmlDom;
-//
-//#ifdef OS_WIN
-//    if (resourceFound == EResourceLocation::kWinBinary)
-//    {
-//      int size = 0;
-//      const void* pResData = LoadWinResource(path.Get(), "svg", size, GetWinModuleHandle());
-//
-//      if (pResData)
-//      {
-//        SkMemoryStream svgStream(pResData, size);
-//        success = xmlDom.build(svgStream) != nullptr;
-//      }
-//    }
-//#endif
-//
-//    if (resourceFound == EResourceLocation::kAbsolutePath)
-//    {
-//      SkFILEStream svgStream(path.Get());
-//
-//      if(svgStream.isValid())
-//        success = xmlDom.build(svgStream) != nullptr;
-//    }
-//
-//    if (success)
-//      svgDOM = SkSVGDOM::MakeFromDOM(xmlDom);
-//
-//    success = svgDOM != nullptr;
-//
-//    if (!success)
-//      return ISVG(nullptr); // return invalid SVG
-//
-//    if (svgDOM->containerSize().width() == 0)
-//      svgDOM->setContainerSize(SkSize::Make(1000, 1000)); //TODO: what should be done when no container size?
-//
-//    pHolder = new SVGHolder(svgDOM);
-//
-//    storage.Add(pHolder, path.Get());
-//  }
-//
-//  return ISVG(pHolder->mSVGDom);
-//}
-//#else
+#ifdef IGRAPHICS_SKIA
+ISVG IGraphics::LoadSVG(const char* fileName, const char* units, float dpi)
+{
+  StaticStorage<SVGHolder>::Accessor storage(sSVGCache);
+  SVGHolder* pHolder = storage.Find(fileName);
+  
+  if(!pHolder)
+  {
+    WDL_String path;
+    EResourceLocation resourceFound = LocateResource(fileName, "svg", path, GetBundleID(), GetWinModuleHandle(), GetSharedResourcesSubPath());
+    
+    if (resourceFound == EResourceLocation::kNotFound)
+      return ISVG(nullptr); // return invalid SVG
+    
+    sk_sp<SkSVGDOM> svgDOM;
+    bool success = false;
+    SkDOM xmlDom;
+
+#ifdef OS_WIN
+    if (resourceFound == EResourceLocation::kWinBinary)
+    {
+      int size = 0;
+      const void* pResData = LoadWinResource(path.Get(), "svg", size, GetWinModuleHandle());
+
+      if (pResData)
+      {
+        SkMemoryStream svgStream(pResData, size);
+        success = xmlDom.build(svgStream) != nullptr;
+      }
+    }
+#endif
+
+    if (resourceFound == EResourceLocation::kAbsolutePath)
+    {
+      SkFILEStream svgStream(path.Get());
+
+      if(svgStream.isValid())
+        success = xmlDom.build(svgStream) != nullptr;
+    }
+
+    if (success)
+      svgDOM = SkSVGDOM::MakeFromDOM(xmlDom);
+
+    success = svgDOM != nullptr;
+
+    if (!success)
+      return ISVG(nullptr); // return invalid SVG
+
+    // If an SVG doesn't have a container size, SKIA doesn't seem to have access to any meaningful size info.
+    // So use NanoSVG to get the size.
+    if (svgDOM->containerSize().width() == 0)
+    {
+      NSVGimage* pImage = nullptr;
+
+      if (resourceFound == EResourceLocation::kAbsolutePath)
+      {
+        pImage = nsvgParseFromFile(path.Get(), units, dpi);
+      }
+      #ifdef OS_WIN
+      else if (resourceFound == EResourceLocation::kWinBinary)
+      {
+        int size = 0;
+        const void* pResData = LoadWinResource(path.Get(), "svg", size, GetWinModuleHandle());
+
+        if (pResData)
+        {
+          WDL_String svgStr{ static_cast<const char*>(pResData) };
+          pImage = nsvgParse(svgStr.Get(), units, dpi);
+        }
+      }
+      #endif
+      
+      assert(pImage);
+
+      svgDOM->setContainerSize(SkSize::Make(pImage->width, pImage->height));
+
+      nsvgDelete(pImage);
+    }
+
+    pHolder = new SVGHolder(svgDOM);
+    
+    storage.Add(pHolder, path.Get());
+  }
+  
+  return ISVG(pHolder->mSVGDom);
+}
+#else
 ISVG IGraphics::LoadSVG(const char* fileName, const char* units, float dpi)
 {
   StaticStorage<SVGHolder>::Accessor storage(sSVGCache);
@@ -1342,19 +1405,13 @@ ISVG IGraphics::LoadSVG(const char* fileName, const char* units, float dpi)
   if(!pHolder)
   {
     WDL_String path;
-
     EResourceLocation resourceFound = LocateResource(fileName, "svg", path, GetBundleID(), GetWinModuleHandle(), GetSharedResourcesSubPath());
 
     if (resourceFound == EResourceLocation::kNotFound)
       return ISVG(nullptr); // return invalid SVG
 
     NSVGimage* pImage = nullptr;
-#ifdef IGRAPHICS_RESVG
-    resvg_render_tree* pRenderTree = nullptr;
-    resvg_options opt;
-    resvg_init_options(&opt);
-#endif
-    
+
 #ifdef OS_WIN    
     if (resourceFound == EResourceLocation::kWinBinary)
     {
@@ -1366,21 +1423,6 @@ ISVG IGraphics::LoadSVG(const char* fileName, const char* units, float dpi)
         WDL_String svgStr{ static_cast<const char*>(pResData) };
 
         pImage = nsvgParse(svgStr.Get(), units, dpi);
-
-#ifdef IGRAPHICS_RESVG
-        opt.font_family = "Times New Roman";
-        opt.languages = "en";
-        opt.dpi = dpi;
-        int err = resvg_parse_tree_from_data(svgStr.Get(), svgStr.GetLength(), &opt, &pRenderTree);
-
-        if (err != RESVG_OK)
-        {
-          if (pImage)
-            nsvgDelete(pImage);
-
-          return ISVG(nullptr); // return invalid SVG
-        }
-#endif
       }
       else
         return ISVG(nullptr); // return invalid SVG
@@ -1390,43 +1432,19 @@ ISVG IGraphics::LoadSVG(const char* fileName, const char* units, float dpi)
     if (resourceFound == EResourceLocation::kAbsolutePath)
     {
       pImage = nsvgParseFromFile(path.Get(), units, dpi);
-      
+
       if(!pImage)
         return ISVG(nullptr); // return invalid SVG
-      
-#ifdef IGRAPHICS_RESVG
-      opt.path = path.Get();
-      opt.font_family = "Times New Roman";
-      opt.languages = "en";
-      opt.dpi = dpi;
-      int err = resvg_parse_tree_from_file(path.Get(), &opt, &pRenderTree);
-      
-      if (err != RESVG_OK)
-      {
-        if(pImage)
-          nsvgDelete(pImage);
-        
-        return ISVG(nullptr); // return invalid SVG
-      }
-#endif
     }
 
-#ifdef IGRAPHICS_RESVG
-    pHolder = new SVGHolder(pImage, pRenderTree, opt);
-#else
     pHolder = new SVGHolder(pImage);
-#endif
     
-    storage.Add(pHolder, fileName);
+    storage.Add(pHolder, path.Get());
   }
 
-#ifdef IGRAPHICS_RESVG
-  return ISVG(pHolder->mImage, pHolder->mRenderTree);
-#else
   return ISVG(pHolder->mImage);
-#endif
 }
-//#endif
+#endif
 
 IBitmap IGraphics::LoadBitmap(const char* name, int nStates, bool framesAreHorizontal, int targetScale)
 {
@@ -1610,8 +1628,11 @@ void IGraphics::DoCreatePopupMenu(IControl& control, IPopupMenu& menu, const IRE
   }
   else
   {
-    IPopupMenu* pReturnMenu = CreatePlatformPopupMenu(menu, bounds);
-    SetControlValueAfterPopupMenu(pReturnMenu);
+    bool isAsync = false;
+    IPopupMenu* pReturnMenu = CreatePlatformPopupMenu(menu, bounds, isAsync);
+    
+    if(!isAsync)
+      SetControlValueAfterPopupMenu(pReturnMenu);
   }
 }
 
@@ -1620,16 +1641,13 @@ void IGraphics::CreatePopupMenu(IControl& control, IPopupMenu& menu, const IRECT
   DoCreatePopupMenu(control, menu, bounds, valIdx, false);
 }
 
-APIBitmap* IGraphics::StartLayer(IControl* pControl, const IRECT& r)
+void IGraphics::StartLayer(IControl* pControl, const IRECT& r)
 {
   IRECT alignedBounds = r.GetPixelAligned(GetBackingPixelScale());
   const int w = static_cast<int>(std::ceil(GetBackingPixelScale() * std::ceil(alignedBounds.W())));
   const int h = static_cast<int>(std::ceil(GetBackingPixelScale() * std::ceil(alignedBounds.H())));
 
-  APIBitmap* pAPIBitmap = CreateAPIBitmap(w, h, GetScreenScale(), GetDrawScale());
-  PushLayer(new ILayer(pAPIBitmap, alignedBounds, pControl, pControl ? pControl->GetRECT() : IRECT()));
-  
-  return pAPIBitmap;
+  PushLayer(new ILayer(CreateAPIBitmap(w, h, GetScreenScale(), GetDrawScale()), alignedBounds, pControl, pControl ? pControl->GetRECT() : IRECT()));
 }
 
 void IGraphics::ResumeLayer(ILayerPtr& layer)
@@ -1800,22 +1818,6 @@ void IGraphics::ApplyLayerDropShadow(ILayerPtr& layer, const IShadow& shadow)
   // Apply alphas to the pattern and recombine/replace the image
   ApplyShadowMask(layer, temp1, shadow);
 }
-
-#ifdef IGRAPHICS_RESVG
-void IGraphics::RasterizeSVGToBitmap(const ISVG& svg, APIBitmap* pAPIBitmap, float x, float y)
-{
-  StaticStorage<SVGHolder>::Accessor storage(sSVGCache);
-
-//  if (svg.IsValid())
-//  {
-//    SVGHolder* pHolder = storage.Find(svg.mFileName.Get());
-//
-//    assert(pHolder);
-//
-//    DoRasterizeSVGToAPIBitmap(pHolder, pAPIBitmap, x, y);
-//  }
-}
-#endif
 
 bool IGraphics::LoadFont(const char* fontID, const char* fileNameOrResID)
 {

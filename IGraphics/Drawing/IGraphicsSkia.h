@@ -16,6 +16,21 @@
 BEGIN_IPLUG_NAMESPACE
 BEGIN_IGRAPHICS_NAMESPACE
 
+/** Converts IRECT to a SkRect */
+SkRect SkiaRect(const IRECT& r);
+
+/** Converts IBlend to a SkBlendMode */
+SkBlendMode SkiaBlendMode(const IBlend* pBlend);
+
+/** Converts IColor to a SkColor */
+SkColor SkiaColor(const IColor& color, const IBlend* pBlend);
+
+/** Get SkTileMode for IPattern */
+SkTileMode SkiaTileMode(const IPattern& pattern);
+
+/** Converts IPattern to SkPaint */
+SkPaint SkiaPaint(const IPattern& pattern, const IBlend* pBlend);
+
 /** IGraphics draw class using Skia
 *   @ingroup DrawClasses */
 class IGraphicsSkia : public IGraphicsPathBase
@@ -93,15 +108,15 @@ public:
   bool FlippedBitmap() const override { return false; }
 
   APIBitmap* CreateAPIBitmap(int width, int height, int scale, double drawScale) override;
+  IBitmap RasterizeSVGToBitmap(const char* path, int width, int height, int targetScale) override;
 
   void GetLayerBitmapData(const ILayerPtr& layer, RawBitmapData& data) override;
   void ApplyShadowMask(ILayerPtr& layer, RawBitmapData& mask, const IShadow& shadow) override;
 
   void UpdateLayer() override;
-  
+    
 protected:
-  void DoRasterizeSVGToAPIBitmap(SVGHolder* pHolder, APIBitmap* pAPIBitmap, float x, float y) override;
-
+    
   void DoMeasureText(const IText& text, const char* str, IRECT& bounds) const override;
   void DoDrawText(const IText& text, const char* str, const IRECT& bounds, const IBlend* pBlend) override;
 

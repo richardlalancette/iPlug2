@@ -26,8 +26,8 @@
   #pragma comment(lib, "libpng.lib")
   #pragma comment(lib, "zlib.lib")
 
-  #include "cairo.h"
-  #include "cairo-win32.h"
+  #include "cairo/src/cairo.h"
+  #include "cairo/src/cairo-win32.h"
 #else
   #error NOT IMPLEMENTED
 #endif
@@ -36,6 +36,15 @@
 
 BEGIN_IPLUG_NAMESPACE
 BEGIN_IGRAPHICS_NAMESPACE
+
+/** Converts IBlend to a cairo_operator_t */
+cairo_operator_t CairoBlendMode(const IBlend* pBlend);
+
+/** Set the source color on a cairo context based on IColor */
+void CairoSetSourceColor(cairo_t* pContext, const IColor& color, const IBlend* pBlend = 0);
+
+/** Set the source pattern on a cairo context based on IPattern */
+void CairoSetSourcePattern(cairo_t* pContext, const IPattern& pattern, const IBlend* pBlend = 0);
 
 /** IGraphics draw class using Cairo
 *   @ingroup DrawClasses */
@@ -89,15 +98,9 @@ protected:
     
   void DoMeasureText(const IText& text, const char* str, IRECT& bounds) const override;
   void DoDrawText(const IText& text, const char* str, const IRECT& bounds, const IBlend* pBlend) override;
-
-  void SetCairoSourcePattern(cairo_t* context, const IPattern& pattern, const IBlend* pBlend);
-
-#ifdef IGRAPHICS_RESVG
-  void DoRasterizeSVGToAPIBitmap(SVGHolder* pHolder, APIBitmap* pAPIBitmap, float x, float y) override;
-#endif
-
-private:
   
+private:
+    
   void PrepareAndMeasureText(const IText& text, const char* str, IRECT& r, double& x, double & y, cairo_glyph_t*& pGlyphs, int& numGlyphs) const;
     
   void PathTransformSetMatrix(const IMatrix& m) override;

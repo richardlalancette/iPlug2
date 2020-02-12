@@ -41,9 +41,9 @@ jobs:
       versionSpec: '2.7'
 
   - script: |
-      # curl -sSf -o rustup-init.exe https://win.rustup.rs
-      # rustup-init.exe -y --default-toolchain stable
-      # echo "##vso[task.setvariable variable=PATH;]%PATH%;%USERPROFILE%\.cargo\bin"
+      curl -sSf -o rustup-init.exe https://win.rustup.rs
+      rustup-init.exe -y --default-toolchain stable
+      echo "##vso[task.setvariable variable=PATH;]%PATH%;%USERPROFILE%\.cargo\bin"
       choco install llvm --version 9.0.0
     condition: eq(variables.buildPlatform, 'x64')
     displayName: Install LLVM
@@ -57,7 +57,7 @@ jobs:
 
   - script: |
       cd Dependencies\IGraphics
-      call build-resvg-win.bat
+      call build-resvg-win.bat skia release
     condition: eq(variables.buildPlatform, 'x64')
     displayName: Build Resvg
     
@@ -128,7 +128,7 @@ jobs:
   condition: and(eq(variables.build_deps, true), eq(variables.build_mac, true))
 
   pool:
-    vmImage: 'macOS-10.14'
+    vmImage: 'macos-10.14'
   steps:
   - checkout: none
 
@@ -144,15 +144,15 @@ jobs:
       ./build-skia-mac.sh
     displayName: Build Skia
 
-  # - bash: |
-  #     curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
-  #     echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
-  #   displayName: Install Rust
+  - bash: |
+      curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
+      echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
+    displayName: Install Rust
 
-  # - bash: |
-  #     cd ./Dependencies/IGraphics
-  #     ./build-resvg-mac.sh
-  #   displayName: Build Resvg
+  - bash: |
+      cd ./Dependencies/IGraphics
+      ./build-resvg-mac.sh
+    displayName: Build Resvg
 
   - bash: |
       cd $BUILD_SOURCESDIRECTORY
@@ -186,7 +186,7 @@ jobs:
   condition: and(eq(variables.build_deps, true), eq(variables.build_ios, true))
 
   pool:
-    vmImage: 'macos-10.13'
+    vmImage: 'macos-10.14'
   steps:
   - checkout: none
 
